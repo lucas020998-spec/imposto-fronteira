@@ -16,6 +16,10 @@ pnpm check                   # lint, tipos, testes e build (não precisa de banc
 
 O simulador funciona sem banco; só o histórico depende dele. Detalhes em [docs/onboarding.md](docs/onboarding.md).
 
+### No Windows, com dois cliques
+
+Com Node.js, pnpm e o `.env.local` prontos, dê dois cliques em `Iniciar Imposto Fronteira.bat`. Na primeira vez (e depois de baixar uma versão nova) ele instala e prepara o app; depois só liga e abre o navegador em http://localhost:3000. Fechar a janela preta desliga o app. Para ter um ícone na área de trabalho: botão direito no arquivo → **Enviar para** → **Área de trabalho (criar atalho)**.
+
 ### Importar o Anexo 05
 
 A base atual vem do PDF atualizado em 09/07/2025, guardado em `fontes/`. Quando a SEFAZ-PB publicar outra versão, salve o PDF em `fontes/` e rode:
