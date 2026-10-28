@@ -6,6 +6,7 @@ Ferramenta de trabalho para o gerente de compras: sóbria, direta, em pt-BR. O n
 
 ## Sistema existente
 
+- Ícone: quadrado verde-azulado (`#0f766e`) com "PB" e "ICMS %" em branco; versões em `public/icons/` (192, 512 e maskable com margem de segurança) e `src/app/icon.png`/`apple-icon.png`. A cor do tema do navegador é a mesma.
 - Tokens em `src/app/globals.css`: `background`, `foreground`, `card`, `muted`, `line`, `accent` (verde-azulado), com variantes para tema escuro via `prefers-color-scheme`.
 - Tipografia: fonte do sistema (`--font-sans`); números com `tabular-nums`.
 - Componentes: `Simulador`, `Resultado` e `SalvarSimulacao` em `src/components/`; página `/historico` com cartões e busca. Não há biblioteca de UI; `cn()` em `src/lib/utils.ts` está disponível.

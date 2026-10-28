@@ -10,11 +10,13 @@ Next.js 16.4.3 (App Router, Turbopack), React 19.3, TypeScript 5.9 estrito, Tail
 
 ```text
 src/
-├── proxy.ts                     # redireciona para /entrar sem sessão válida
+├── proxy.ts                     # redireciona para /entrar sem sessão válida (manifesto e ícones ficam públicos)
 ├── app/
 │   ├── layout.tsx               # cabeçalho, navegação e rodapé
 │   ├── page.tsx                 # página do simulador
 │   ├── entrar/page.tsx          # tela de senha
+│   ├── manifest.ts              # app instalável (PWA): nome, cores e ícones de public/icons
+│   ├── icon.png, apple-icon.png # ícones da aba e do iPhone
 │   ├── historico/page.tsx       # últimas 50 simulações com busca (?q=)
 │   └── como-calcular/page.tsx   # explicação com exemplos calculados pelo motor
 ├── components/
@@ -55,6 +57,8 @@ scripts/
 └── verify-quality-rules.mjs     # autoteste das regras de lint
 eslint-rules/                    # regras do toolkit (perfil completo)
 fontes/                          # PDF oficial do Anexo 05 usado na importação
+render.yaml, .node-version       # publicação no Render (Blueprint, Node 22)
+Iniciar Imposto Fronteira.bat    # liga o app no Windows com dois cliques
 ```
 
 ## Fluxo
@@ -91,6 +95,8 @@ Ciclo: alterar o schema → `pnpm db:generate` → revisar o SQL → `pnpm db:mi
 | Cálculo no cliente | Resposta imediata e sem servidor | Regras precisarem ficar privadas |
 | Centavos inteiros e arredondamento por valor | Evita erro de ponto flutuante | A SEFAZ-PB definir outra regra de arredondamento |
 | MVA ajustada com 2 casas | Prática usual nos exemplos de ST | Divergência com cálculo oficial |
+| Render (grátis) + Neon (grátis), região US East | Roda o app sem mudanças, com senha e histórico; Render não tem região no Brasil, então o banco fica na mesma região do app | O sono de 15 min do plano grátis incomodar, ou houver necessidade de dados no Brasil |
+| App instalável (PWA) em vez de app de loja | Mesmo código, sem custo de loja e com atualização automática | Precisar de recurso que só app nativo oferece |
 | Sem fonte do Google (`next/font/google`) | O build não depende de rede; fontes do sistema | Houver identidade visual definida |
 | `"type": "module"` e imports `.ts` no parser | O importador roda o mesmo parser em Node 22 sem build | Mudança de runtime |
 

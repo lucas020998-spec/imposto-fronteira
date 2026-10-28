@@ -76,7 +76,7 @@ Usuários individuais e permissões, edição ou exclusão de simulações, cál
 
 ## Próxima entrega
 
-Publicar o app com o banco no Neon e as variáveis `DATABASE_URL` e `APP_PASSWORD` na hospedagem (ver `docs/onboarding.md`).
+Publicar no Render (grátis) com o banco no Neon (grátis) e instalar no celular pela tela inicial (ver `docs/onboarding.md`).
 
 ## Manutenção
 

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_SESSAO, sessaoValida } from "@/lib/auth";
 
 // Bloqueia todas as páginas sem sessão válida. As ações e páginas com dados repetem a
-// verificação (`exigirSessao`), porque o proxy não é a única linha de defesa.
+// verificação (`temSessao`), porque o proxy não é a única linha de defesa.
 export function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   if (pathname === "/entrar") return NextResponse.next();
@@ -14,5 +14,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Manifesto e ícones ficam públicos: o celular os lê antes do login para instalar o app.
+  matcher: ["/((?!_next/static|_next/image|manifest\\.webmanifest|icons/|icon\\.png|apple-icon\\.png).*)"],
 };

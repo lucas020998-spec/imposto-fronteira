@@ -1,0 +1,24 @@
+# Blueprint do Render: um serviço web Node no plano gratuito.
+# Segredos ficam no painel do Render (sync: false), nunca neste arquivo.
+services:
+  - type: web
+    name: imposto-fronteira
+    runtime: node
+    plan: free
+    # Mesma região do banco no Neon (AWS US East / N. Virginia) para consultas rápidas.
+    region: virginia
+    # pnpm na versão do projeto via npx, sem instalar nada global; --prod=false garante as
+    # devDependencies (TypeScript, Tailwind) que o build usa.
+    buildCommand: npx --yes pnpm@10.28.0 install --frozen-lockfile --prod=false && npx --yes pnpm@10.28.0 build
+    startCommand: node_modules/.bin/next start
+    healthCheckPath: /entrar
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: LOG_LEVEL
+        value: info
+      - key: APP_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false

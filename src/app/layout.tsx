@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { sair } from "@/features/acesso/actions";
 import "./globals.css";
@@ -6,7 +6,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Imposto Fronteira PB",
   description: "Simulador do ICMS de fronteira em compras interestaduais com destino à Paraíba.",
+  // iPhone: abre em tela cheia quando instalado pela tela inicial.
+  appleWebApp: { capable: true, title: "Fronteira PB", statusBarStyle: "default" },
 };
+
+export const viewport: Viewport = { themeColor: "#0f766e" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

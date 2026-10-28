@@ -48,5 +48,8 @@
     "unpdf": "^1.9.1",
     "vitest": "^5.0.5"
   },
-  "packageManager": "pnpm@10.28.0"
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  }
 }

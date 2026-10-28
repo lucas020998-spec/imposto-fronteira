@@ -42,4 +42,4 @@ O comando grava `src/data/anexo5.json`. Confira alguns itens com o PDF antes de 
 
 ## Próxima entrega
 
-Publicar o app com o banco no Neon (passo a passo em [docs/onboarding.md](docs/onboarding.md#banco-de-produção-neon)).
+Publicar no Render com o banco no Neon e instalar no celular (passo a passo em [docs/onboarding.md](docs/onboarding.md#publicação-neon-banco--render-app)).

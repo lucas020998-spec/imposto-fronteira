@@ -31,19 +31,31 @@ Com o Node.js instalado e o `.env.local` pronto, dê dois cliques em `Iniciar Im
 
 Não use o banco de produção para testes.
 
-## Banco de produção (Neon)
+## Publicação: Neon (banco) + Render (app)
 
-1. Crie uma conta em https://neon.com e um projeto na região **AWS São Paulo (sa-east-1)**.
-2. No painel do projeto, em **Connect**, copie duas strings de conexão do banco `neondb`:
-   - com **Connection pooling** ligado (o host tem `-pooler`): vai em `DATABASE_URL`;
-   - com pooling desligado: vai em `DATABASE_URL_UNPOOLED` (usada só por migrações).
-3. Crie as tabelas, de um destes jeitos:
-   - **Sem computador de desenvolvimento:** rode `pnpm db:sql > migracoes.sql` (ou peça ao agente o arquivo), abra o **SQL Editor** do Neon, cole o conteúdo e execute. Só em banco novo.
-   - **Com o projeto local:** `DATABASE_URL_UNPOOLED=… pnpm db:migrate`.
-4. Na hospedagem do app, cadastre `DATABASE_URL`, `APP_PASSWORD` e, se quiser, `LOG_LEVEL`. Nunca use `NEXT_PUBLIC_` nesses nomes.
-5. Novas migrações depois disso: `pnpm db:migrate` com `DATABASE_URL_UNPOOLED`, ou um novo `pnpm db:sql` aplicado à mão só com o trecho da migração nova.
+Os dois têm plano gratuito. O app fica num link do tipo `https://imposto-fronteira.onrender.com`, protegido pela senha de `APP_PASSWORD`.
+
+### 1. Banco no Neon
+
+1. Crie uma conta em https://neon.com e um projeto na região **AWS US East (N. Virginia)**, a mesma do Render (`render.yaml`, `region: virginia`).
+2. Em **Connect**, copie a string de conexão do banco `neondb` com **Connection pooling** ligado (o host tem `-pooler`). Ela vai em `DATABASE_URL`. Pode manter os parâmetros `sslmode` e `channel_binding` como vierem.
+3. Crie as tabelas: rode `pnpm db:sql > migracoes.sql` (ou peça ao agente o arquivo), abra o **SQL Editor** do Neon, cole o conteúdo e clique em **Run**. Só em banco novo.
+4. Migrações futuras: `DATABASE_URL_UNPOOLED=<string sem pooling> pnpm db:migrate`, ou aplique à mão só o SQL da migração nova.
 
 No plano gratuito o banco hiberna sem uso; o primeiro acesso depois disso demora alguns segundos.
+
+### 2. App no Render
+
+1. Crie uma conta em https://render.com com **Sign in with GitHub** e autorize o repositório `imposto-fronteira`.
+2. **New → Blueprint**, escolha o repositório. O Render lê o `render.yaml` (serviço web Node, plano gratuito, build com pnpm, `next start`, verificação em `/entrar`).
+3. Ele pede os segredos marcados com `sync: false`: `APP_PASSWORD` (a senha de acesso) e `DATABASE_URL` (do Neon). Nunca coloque esses valores no repositório.
+4. Clique em **Apply**. O primeiro build leva alguns minutos; depois, cada envio ao GitHub publica sozinho (`autoDeploy`).
+
+No plano gratuito o serviço dorme após 15 minutos sem acesso; o primeiro acesso depois disso leva de 30 segundos a 1 minuto.
+
+### 3. Celular
+
+Abra o link no navegador do celular e entre com a senha. Android (Chrome): menu ⋮ → **Adicionar à tela inicial** (ou **Instalar app**). iPhone (Safari): botão **Compartilhar** → **Adicionar à Tela de Início**. O ícone abre o app em tela cheia; a sessão dura 30 dias.
 
 ## Base do Anexo 05
 
