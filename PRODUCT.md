@@ -2,64 +2,68 @@
 
 ## Problema e objetivo
 
-Quem compra mercadoria de outro estado para revender na Paraíba paga ICMS na entrada (o "imposto de fronteira"). O valor depende do NCM do produto, do estado do fornecedor e de estar ou não na substituição tributária do Anexo 05 do RICMS-PB. Hoje o gerente de compras descobre esse custo consultando o PDF do anexo e fazendo a conta à mão ou perguntando à contabilidade.
+A Marconi Pinto Metalúrgica (João Pessoa/PB, optante do Simples Nacional) compra mercadorias de outros estados e paga ICMS na entrada, o "imposto de fronteira". O valor depende do NCM do produto, do estado do fornecedor e de estar ou não na substituição tributária do Anexo 05 do RICMS-PB. Hoje o gerente de compras descobre esse custo consultando o PDF do anexo e fazendo a conta à mão ou perguntando à contabilidade.
 
-Objetivo: antes de fechar a compra, saber em segundos o percentual de ICMS que a Paraíba vai cobrar sobre os produtos, para comparar fornecedores e formar preço.
+Objetivo: antes de fechar a compra, saber em segundos o percentual de ICMS que a Paraíba vai cobrar sobre os produtos, guardar a simulação e consultá-la depois.
 
 ## Público
 
-Gerente de compras de empresa varejista ou atacadista paraibana. Uso individual, sem login, em desktop e celular, em português.
+Gerente de compras da empresa. Uso interno, sem login, em desktop e celular, em português.
 
-## Fluxos da primeira versão
+## Fluxos
 
-1. **Simular uma compra:** informa NCM, estado do fornecedor e valor dos produtos e, se quiser, frete e IPI. Recebe o percentual sobre os produtos, o valor a recolher e a memória de cálculo.
+1. **Simular uma compra:** informa NCM, estado do fornecedor e valor dos produtos e, se quiser, frete, IPI e se o fornecedor é do Simples. Recebe o percentual sobre os produtos, o valor a recolher e a memória de cálculo.
 2. **Consultar o Anexo 05:** ao digitar o NCM, vê os itens do anexo que o cobrem (CEST, descrição, MVA) e escolhe o correto quando há mais de um.
-3. **Entender o cálculo:** a página "Como é calculado" explica as alíquotas, a MVA ajustada e a diferença entre ST e antecipação parcial, com exemplos numéricos.
-4. **Atualizar a base:** quem mantém o app importa uma nova versão do PDF do Anexo 05 (ou um CSV) com `pnpm anexo5:import`.
-
-## MVP
-
-1. Motor de cálculo de ST (MVA ajustada) e antecipação parcial, com testes.
-2. Busca de NCM por prefixo na base importada do Anexo 05.
-3. Frete, IPI e MVA manual opcionais; alíquota interna editável (padrão 20%).
-4. Página explicativa com exemplos gerados pelo mesmo motor.
-5. Importador do PDF/CSV do Anexo 05.
+3. **Salvar no histórico:** com a simulação na tela, informa fornecedor e observação (ambos opcionais) e salva.
+4. **Consultar o histórico:** vê as 50 simulações mais recentes e busca por NCM, fornecedor, observação ou descrição do anexo.
+5. **Entender o cálculo:** a página "Como é calculado" explica as regras do Simples com exemplos numéricos.
+6. **Atualizar a base:** quem mantém o app importa uma nova versão do PDF do Anexo 05 (ou um CSV) com `pnpm anexo5:import`.
 
 ## Fora do escopo
 
-Login, histórico de simulações, cálculo por nota fiscal com vários itens, Simples Nacional, benefícios fiscais, regimes especiais, produtos com preço de pauta/PMC, FCP e emissão de guia (DAR).
+Login e permissões, edição ou exclusão de simulações, cálculo por nota fiscal com vários itens, regime normal (débito e crédito), benefícios fiscais, FCP, produtos com preço de pauta/PMC, compras de matéria-prima para industrialização ou de uso e consumo, e emissão de guia (DAR).
 
-## Requisitos
+## Regras de cálculo (Simples Nacional)
 
 - Alíquota interestadual pelo estado de origem: 7% para SP, RJ, MG, PR, SC e RS; 12% para os demais; 4% para importados.
 - Alíquota interna geral da PB: 20% (Lei 12.788/2023), editável na tela.
-- ST: MVA ajustada = [(1 + MVA) × (1 − interestadual) ÷ (1 − interna)] − 1, com 2 casas decimais. Base = (produtos + frete + IPI) × (1 + MVA ajustada). ICMS = base × interna − (produtos + frete) × interestadual.
-- Antecipação parcial: (produtos + frete) × (interna − interestadual).
+- O ICMS de fronteira é pago fora do DAS (LC 123/2006, art. 13, § 1º, XIII, "a" e "g").
+- **Substituição tributária (NCM no Anexo 05):** MVA ajustada = [(1 + MVA) × (1 − interestadual) ÷ (1 − interna)] − 1, com 2 casas decimais. Se o fornecedor é do Simples, usa a MVA original sem ajuste (Conv. ICMS 142/2018, cl. 11, § 1º). Base = (produtos + frete + IPI) × (1 + MVA). ICMS = base × interna − (produtos + frete) × interestadual.
+- **Antecipação parcial (NCM fora do anexo):** diferença de alíquotas sem agregar MVA. Base = produtos + frete + IPI. ICMS = base × interna − (produtos + frete) × interestadual.
 - Valores em centavos inteiros, arredondamento em cada valor monetário.
+
+## Requisitos
+
+- O histórico guarda a entrada e o resultado do momento em que foi salvo; o servidor recalcula o resultado antes de gravar.
+- Fornecedor até 120 caracteres e observação até 1.000, ambos opcionais.
 - Interface acessível em pt-BR, funcional a partir de 360px de largura.
 
 ## Restrições e decisões técnicas
 
 - Next.js 16.4 (App Router), TypeScript estrito, Tailwind 4, pnpm 10, Node 22.
-- **Sem banco de dados.** O app não guarda dados de usuários; a única base é o Anexo 05, um arquivo público, versionado e atualizado poucas vezes por ano. Ele fica em `src/data/anexo5.json`, gerado pelo importador e revisado no Git. Revisar essa decisão se surgirem histórico, contas de usuário ou edição da base pela interface.
-- Cálculo roda no navegador; as páginas são estáticas.
+- PostgreSQL com Drizzle ORM e driver `pg` para o histórico, padrão do toolkit.
+- O Anexo 05 continua como arquivo versionado (`src/data/anexo5.json`): é público, muda poucas vezes por ano e o diff fica revisável no Git.
+- O cálculo roda no navegador; o servidor recalcula ao salvar.
 
 ## Premissas e pendências
 
 | Item | Tipo | Impacto | Próximo passo |
 |---|---|---|---|
-| **PDF oficial do Anexo 05 não importado** | Pendência essencial | Sem ele, a busca por NCM não encontra nada e o app só calcula com MVA manual ou antecipação parcial | Baixar o PDF vigente da SEFAZ-PB e rodar `pnpm anexo5:import`; conferir uma amostra |
-| Layout do PDF real | Premissa | O importador foi testado com texto e PDF sintéticos no formato ITEM / CEST / NCM / DESCRIÇÃO / MVA | Validar com o arquivo oficial e ajustar `src/lib/anexo5/parse.ts` se preciso |
-| Frete e IPI na antecipação parcial | Premissa reversível | Frete na nota entra na base; IPI não entra | Confirmar com a contabilidade |
-| Alíquota interna 20% para todos os itens | Premissa reversível | Produtos com alíquota própria exigem ajuste manual | Campo editável na tela |
-| FCP e MVA específicas por alíquota interestadual | Fora da v1 | Alguns itens do anexo podem ter MVA diferente por origem | Avaliar após importar o PDF real |
+| **PDF oficial do Anexo 05 não importado** | Pendência essencial | Sem ele, a busca por NCM não encontra nada e o app só calcula com MVA manual ou antecipação parcial | O envio pelo chat falhou; enviar pelo GitHub e rodar `pnpm anexo5:import` |
+| **Banco de dados de produção** | Decisão externa | O histórico só funciona com um PostgreSQL acessível pelo app publicado | Escolher o provedor (ex.: Neon ou Supabase) e configurar `DATABASE_URL` |
+| **Acesso ao histórico** | Decisão externa | Sem login, quem tiver o endereço do app vê e grava simulações | Publicar com proteção de acesso (ex.: senha da hospedagem) ou pedir login |
+| Regras do Simples na PB | Premissa reversível | IPI na base da antecipação, MVA sem ajuste para fornecedor do Simples e crédito pela alíquota interestadual vieram da LC 123, do Conv. 142/2018 e de fontes secundárias; o RICMS-PB não foi consultado (site bloqueado) | Validar com a contabilidade |
+| Base "por dentro" | Premissa | Fontes secundárias indicam que, desde 2021, a PB calcula a antecipação do regime normal "por dentro" (art. 106). Não foi confirmado se vale para o Simples | Validar com a contabilidade |
+| Industrialização e uso/consumo | Fora da v1 | A empresa é metalúrgica; compras de insumos ou de uso e consumo podem ter outra regra | Definir com a contabilidade |
+| Cartão CNPJ de 2015 | Premissa | Enquadramento atual no Simples informado pelo usuário | Nenhum |
 
 ## Critérios de aceite
 
-- Com NCM coberto pelo anexo, o resultado indica substituição tributária e usa a MVA do item escolhido.
-- Com NCM fora do anexo, o resultado indica antecipação parcial.
+- Com NCM coberto pelo anexo, o resultado indica substituição tributária e usa a MVA do item escolhido; com fornecedor do Simples marcado, a MVA não é ajustada.
+- Com NCM fora do anexo, o resultado indica antecipação parcial, com IPI na base.
 - Frete e IPI só entram no cálculo quando marcados.
-- O exemplo da página explicativa (R$ 1.000, PE, frete R$ 50, IPI 10%, MVA 33%) resulta em 21,05% e R$ 210,49.
+- R$ 1.000 de PE, frete R$ 50, IPI 10%, sem MVA: 10,4% e R$ 104,00.
+- Uma simulação salva aparece no topo do histórico com fornecedor e observação, e a busca por um trecho da observação a encontra.
 - A tela não tem rolagem horizontal em 390px.
 
 ## Próxima entrega

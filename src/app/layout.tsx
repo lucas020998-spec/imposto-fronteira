@@ -13,9 +13,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col font-sans">
         <header className="border-b border-line">
           <nav className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-            <Link href="/" className="font-semibold">Imposto Fronteira PB</Link>
+            <Link href="/" className="font-semibold">
+              Imposto Fronteira PB
+              <span className="block text-xs font-normal text-muted">Marconi Pinto Metalúrgica · Simples Nacional</span>
+            </Link>
             <div className="flex gap-4 text-sm">
               <Link href="/" className="hover:text-accent">Simulador</Link>
+              <Link href="/historico" className="hover:text-accent">Histórico</Link>
               <Link href="/como-calcular" className="hover:text-accent">Como é calculado</Link>
             </div>
           </nav>

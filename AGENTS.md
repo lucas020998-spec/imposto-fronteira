@@ -13,7 +13,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Produto e stack
 
 - Escopo, regras fiscais e pendências: `PRODUCT.md`.
-- Next.js 16.4 (App Router), React 19.3, TypeScript 5.9 estrito, Tailwind 4, Zod 4, Vitest 5, Node 22, pnpm 10. Sem banco de dados (motivo em `PRODUCT.md`).
+- Empresa do Simples Nacional: todas as regras de cálculo seguem o Simples (ver `PRODUCT.md`).
+- Next.js 16.4 (App Router), React 19.3, TypeScript 5.9 estrito, Tailwind 4, Zod 4, Drizzle + PostgreSQL (`pg`), Pino, Vitest 5, Node 22, pnpm 10.
 - Setup e evidências: `docs/setup.md`.
 
 ## Comandos
@@ -27,6 +28,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Build: `pnpm build`
 - Tudo: `pnpm check`
 - Importar o Anexo 05: `pnpm anexo5:import <arquivo.pdf|csv> ["fonte"]`
+- Banco: `pnpm db:generate` (gera SQL, sem conectar) e `pnpm db:migrate` (aplica no `DATABASE_URL`)
+- Integração com banco: `TEST_DATABASE_URL=... pnpm vitest run src/features`
 
 ## Regras do projeto
 
@@ -34,6 +37,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Dinheiro em centavos inteiros; alíquotas e MVA em percentual. Não use ponto flutuante para somar valores em reais.
 - `src/data/anexo5.json` é gerado pelo importador. Não edite à mão nem invente NCM/MVA: dados fiscais vêm do PDF oficial da SEFAZ-PB.
 - `src/lib/anexo5/parse.ts` e `schema.ts` também rodam em Node pelo script de importação; mantenha imports relativos com extensão `.ts` neles.
+- Histórico: o servidor sempre recalcula o resultado antes de gravar; nunca confie em valores calculados no cliente. Acesso ao banco só em `src/features/*/repository.ts`.
+- Migrações: gere com `db:generate`, revise o SQL e aplique só no banco certo. Nunca migre em build, import ou requisição; não use `db:push`.
+- Logs com o `logger` (Pino), sem dados de formulário nem `DATABASE_URL`.
 - Textos da interface e da documentação em português do Brasil.
 
 ## Acordos de trabalho
@@ -74,6 +80,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `find-skills`: quando faltar uma capacidade concreta.
 - `next-dev-loop`: feedback de runtime após mudanças, se `agent-browser` estiver disponível (hoje não está).
 - `next-bundle-optimizer`: auditoria de bundle baseada em evidência.
+- `supabase-postgres-best-practices`: antes de mexer em schema, SQL, migrações ou desempenho do PostgreSQL (vale para qualquer provedor).
 
 Instalar uma skill não executa suas ações nem autoriza deploy, animações ou mudanças de arquitetura.
 

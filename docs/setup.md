@@ -12,7 +12,8 @@
 | Decisão | Motivo e fonte |
 |---|---|
 | Next.js 16.4.3 estável via `create-next-app@16.4.3` | Canal `latest` do registro npm em 28/10/2026; flags conferidas em `--help` |
-| Sem Drizzle/PostgreSQL, Pino e `env.ts` | Produto sem persistência nem segredos (ver `PRODUCT.md`); perfil de lint leve |
+| 1ª etapa sem banco; 2ª etapa com Drizzle/PostgreSQL, Pino e `env.ts` | O usuário pediu histórico de simulações; adotado o núcleo padrão do toolkit e o perfil de lint completo |
+| Regras do Simples Nacional | LC 123/2006 art. 13 § 1º XIII; Conv. ICMS 142/2018 cl. 11 § 1º (MVA sem ajuste para remetente do Simples), via fórum e blogs contábeis. RICMS-PB não consultado (site bloqueado) |
 | `@types/node@22` | Alinhado ao runtime Node 22 (o toolkit valida com Node 24) |
 | `unpdf` para ler o PDF | Extração de texto em Node sem dependências nativas; só em desenvolvimento |
 | Sem `next/font/google` | Build sem depender de rede |
@@ -25,14 +26,15 @@
 | Componente | Ação e motivo | Escopo | Estado e evidência |
 |---|---|---|---|
 | Base Next.js (App Router, TS, Tailwind, ESLint, `src/`, `@/*`) | `create-next-app` com pnpm | Projeto | Validado: build gera 3 rotas estáticas |
-| Zod, server-only, clsx, tailwind-merge, Vitest, typescript-eslint | Núcleo padrão sem banco | Projeto | Validado: `pnpm check` passa |
-| `templates/next/` | Copiados `vitest.config.mts` e `src/lib/utils.ts`; env, logger e db omitidos (sem uso) | Projeto | Validado |
-| ESLint do toolkit | Perfil leve + `eslint-rules/` completo + perfil tipado + autoteste | Projeto | Validado: lint, lint tipado (~5 s) e `lint:rules` passam |
+| Zod, server-only, clsx, tailwind-merge, Vitest, typescript-eslint | Núcleo padrão | Projeto | Validado: `pnpm check` passa |
+| Drizzle ORM 0.45, `pg` 8, Pino 10, drizzle-kit, `@next/env` 16.4.3 | Adicionados na 2ª etapa, com o histórico | Projeto | Validado: SQL gerado, migração aplicada no PostgreSQL 16 local, teste de integração passa |
+| `templates/next/` | Todos os arquivos copiados (env, logger, db, testes, `drizzle.config.ts`, `.env.example`) | Projeto | Validado |
+| ESLint do toolkit | Perfil completo (logger, fronteira de dados, guardas do Drizzle) + `eslint-rules/` + perfil tipado + autoteste | Projeto | Validado: lint, lint tipado (~5 s) e `lint:rules` passam |
 | Skills Vercel (`vercel-react-best-practices`, `vercel-composition-patterns`, `web-design-guidelines`, `writing-guidelines`, `vercel-react-view-transitions`, `vercel-optimize`, `deploy-to-vercel`, `vercel-cli-with-tokens`) | Catálogo atual conferido com `--list`; instaladas só para Claude Code | Projeto (`.claude/skills/`, cópia) | Instaladas; `skills list` confirma. Descoberta em nova sessão: pendente |
 | `vercel-react-native-skills` | Não se aplica (app web) | — | Não instalada |
 | `find-skills` (vercel-labs/skills) | Catálogo | Projeto | Instalada |
 | `next-dev-loop`, `next-bundle-optimizer` (vercel/next.js@canary) | Next 16.4 com Turbopack é compatível | Projeto | Instaladas. `agent-browser` ausente na máquina: `next-dev-loop` bloqueado até a preparação da máquina |
-| `supabase-postgres-best-practices` | Sem PostgreSQL | — | Não se aplica |
+| `supabase-postgres-best-practices` (supabase/agent-skills) | Projeto passou a usar PostgreSQL | Projeto (`.claude/skills/`) | Instalada; descoberta em nova sessão pendente |
 | `gh-fix-ci` | Sem GitHub Actions e cliente não é Codex | — | Não se aplica por enquanto |
 | `differential-review` | Projeto sem área sensível (sem auth, dados ou segredos) | — | Não selecionada; usar o prompt de segurança do toolkit |
 | shadcn | Nenhum sistema de UI adotado | — | Não se aplica |
@@ -51,11 +53,13 @@
 | Item | Estado | Evidência |
 |---|---|---|
 | `pnpm check` | Validado | Lint, tipos, lint tipado, regras, 17 testes e build sem erros |
-| Auditoria | Validado | `pnpm audit --prod` e `pnpm audit`: sem vulnerabilidades conhecidas |
+| Auditoria | Validado | `--prod` limpo; 1 moderada só de desenvolvimento (esbuild via drizzle-kit), detalhe em `quality.md` |
 | Importador com PDF sintético | Validado | 3 itens extraídos corretamente (CEST, 2 NCMs, MVA 71,78%, item sem MVA) |
 | Importador com PDF oficial | Pendente | Site da SEFAZ-PB bloqueado na sessão |
-| Simulador no navegador | Validado | `next start` na porta 3123 + Playwright: R$ 1.000, PE, frete R$ 50, IPI 10%, MVA 33% → 21,05% / R$ 210,49; sem MVA → antecipação 8,4%; busca do NCM 3917.33.00 na base sintética → ST com MVA 71,78% (32,94%); NCM fora → antecipação parcial; 390px sem rolagem horizontal; sem erros de console. Servidor encerrado e base restaurada ao final |
-| SQL/migrações | Não se aplica | Sem banco |
+| Histórico (2ª etapa) | Validado | PostgreSQL 16 local: `db:generate` → SQL revisado → `db:migrate`. Playwright: simulação de R$ 1.000 de PE com frete e IPI (antecipação 10,4%, R$ 104,00) salva com fornecedor e observação, campos limpos, item no topo de `/historico`, busca "esquadrias" acha 1, busca inexistente mostra estado vazio, 390px sem rolagem, sem erros de console. Linha conferida no banco. Banco local apenas; produção pendente |
+| Teste de integração do repositório | Validado | `TEST_DATABASE_URL=… pnpm vitest run src/features`: 5 testes passam |
+| Simulador no navegador (1ª etapa) | Validado | `next start` na porta 3123 + Playwright: R$ 1.000, PE, frete R$ 50, IPI 10%, MVA 33% → 21,05% / R$ 210,49; sem MVA → antecipação 8,4%; busca do NCM 3917.33.00 na base sintética → ST com MVA 71,78% (32,94%); NCM fora → antecipação parcial; 390px sem rolagem horizontal; sem erros de console. Servidor encerrado e base restaurada ao final |
+| Banco de produção | Pendente | Provedor e `DATABASE_URL` a definir pelo usuário |
 
 ## Memória e harness
 
@@ -65,6 +69,7 @@
 ## Pendências e próxima entrega
 
 1. **Importar o PDF oficial do Anexo 05** e conferir 10 itens de segmentos diferentes (próxima entrega).
-2. Validar com a contabilidade as premissas de frete e IPI na antecipação parcial e de arredondamento.
-3. Preparar a máquina (prompt 10 do toolkit): Ponytail, Caveman, Superpowers, RTK, Context7, Graphify e agent-browser.
-4. Criar um repositório no GitHub e publicar o código; a sessão na nuvem é temporária.
+2. Escolher o PostgreSQL de produção e a proteção de acesso do app publicado (sem login, o histórico fica aberto a quem tiver o endereço).
+3. Validar com a contabilidade as regras do Simples (IPI na base, MVA sem ajuste para fornecedor do Simples, cálculo "por dentro") e de arredondamento.
+4. Preparar a máquina (prompt 10 do toolkit): Ponytail, Caveman, Superpowers, RTK, Context7, Graphify e agent-browser.
+5. Enviar o código ao GitHub: o repositório `lucas020998-spec/imposto-fronteira` existe, mas o Claude GitHub App não tem permissão de escrita nele.

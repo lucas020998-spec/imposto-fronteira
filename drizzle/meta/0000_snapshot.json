@@ -1,0 +1,163 @@
+{
+  "id": "be256dc2-a5f1-4fe3-84be-1669d7b1e43f",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.simulacoes": {
+      "name": "simulacoes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "criada_em": {
+          "name": "criada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ncm": {
+          "name": "ncm",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cest": {
+          "name": "cest",
+          "type": "varchar(9)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "descricao_anexo": {
+          "name": "descricao_anexo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uf_origem": {
+          "name": "uf_origem",
+          "type": "varchar(2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "importado": {
+          "name": "importado",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fornecedor_simples": {
+          "name": "fornecedor_simples",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor_produtos": {
+          "name": "valor_produtos",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete": {
+          "name": "frete",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aliquota_ipi": {
+          "name": "aliquota_ipi",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aliquota_interestadual": {
+          "name": "aliquota_interestadual",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aliquota_interna": {
+          "name": "aliquota_interna",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mva": {
+          "name": "mva",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "regime": {
+          "name": "regime",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icms_devido": {
+          "name": "icms_devido",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "percentual_efetivo": {
+          "name": "percentual_efetivo",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fornecedor": {
+          "name": "fornecedor",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observacao": {
+          "name": "observacao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "simulacoes_criada_em_idx": {
+          "name": "simulacoes_criada_em_idx",
+          "columns": [
+            {
+              "expression": "criada_em",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

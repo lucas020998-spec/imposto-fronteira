@@ -1,4 +1,5 @@
-// Cálculo do ICMS "de fronteira" devido à Paraíba numa compra interestadual.
+// Cálculo do ICMS "de fronteira" devido à Paraíba numa compra interestadual feita por
+// empresa do Simples Nacional (LC 123/2006, art. 13, § 1º, XIII, "a" e "g").
 // Valores monetários em centavos (inteiros); alíquotas e MVA em percentual (ex.: 20 = 20%).
 
 export type Regime = "st" | "antecipacao";
@@ -13,13 +14,15 @@ export interface Entrada {
   aliquotaIpi?: number;
   /** MVA original do Anexo 05. Sem MVA, o cálculo é de antecipação parcial. */
   mva?: number;
+  /** Fornecedor optante do Simples: a ST usa a MVA original, sem ajuste (Conv. ICMS 142/2018, cl. 11, § 1º). */
+  fornecedorSimples?: boolean;
 }
 
 export interface Resultado {
   regime: Regime;
   valorIpi: number;
   frete: number;
-  /** MVA ajustada em percentual, arredondada em 2 casas (só na ST). */
+  /** MVA aplicada na ST em percentual: ajustada (2 casas) ou original, se o fornecedor é do Simples. */
   mvaAjustada?: number;
   baseCalculo: number;
   /** ICMS destacado pelo fornecedor, abatido como crédito. */
@@ -46,12 +49,14 @@ export function calcular(e: Entrada): Resultado {
   const icmsProprio = Math.round(baseIcmsProprio * pct(e.aliquotaInterestadual));
 
   if (e.mva === undefined) {
-    // Antecipação parcial: diferença entre a alíquota interna e a interestadual.
-    const debito = Math.round(baseIcmsProprio * pct(e.aliquotaInterna));
-    return resultado("antecipacao", e, { valorIpi, frete, baseCalculo: baseIcmsProprio, icmsProprio, debito });
+    // Antecipação parcial do Simples: diferença entre alíquotas, sem agregar MVA. O IPI entra na
+    // base porque é custo da compra para quem não se credita dele.
+    const baseCalculo = baseIcmsProprio + valorIpi;
+    const debito = Math.round(baseCalculo * pct(e.aliquotaInterna));
+    return resultado("antecipacao", e, { valorIpi, frete, baseCalculo, icmsProprio, debito });
   }
 
-  const mvaAj = mvaAjustada(e.mva, e.aliquotaInterestadual, e.aliquotaInterna);
+  const mvaAj = e.fornecedorSimples ? e.mva : mvaAjustada(e.mva, e.aliquotaInterestadual, e.aliquotaInterna);
   const baseCalculo = Math.round((e.valorProdutos + frete + valorIpi) * (1 + pct(mvaAj)));
   const debito = Math.round(baseCalculo * pct(e.aliquotaInterna));
   return { ...resultado("st", e, { valorIpi, frete, baseCalculo, icmsProprio, debito }), mvaAjustada: mvaAj };

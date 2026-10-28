@@ -9,7 +9,8 @@
 | `pnpm typecheck` | Gera os tipos de rota (`next typegen`) e roda `tsc --noEmit` em modo estrito |
 | `pnpm lint:rules` | Autoteste das regras locais de lint |
 | `pnpm test` | Testes Vitest em Node |
-| `pnpm build` | Build de produção; as três rotas são estáticas |
+| `pnpm build` | Build de produção; `/` e `/como-calcular` estáticas, `/historico` dinâmica |
+| `pnpm db:generate` | Gera o SQL da migração sem conectar; revise antes de aplicar |
 | `pnpm check` | Todos os acima, nessa ordem. Rode antes de concluir qualquer mudança |
 
 O build não roda lint; use `pnpm lint` ou `pnpm check`.
@@ -18,14 +19,17 @@ O build não roda lint; use `pnpm lint` ou `pnpm check`.
 
 - TypeScript estrito e presets oficiais.
 - Limite de 350 linhas e organização proporcional ao comportamento.
-- Perfil leve do toolkit (`eslint.config.mjs` → `eslint-rules/next-base.mjs`): sem banco nem logger, então as regras de acesso a dados e de logger não se aplicam.
-- Entradas externas validadas com Zod; o JSON do anexo é validado no build e na importação.
+- Perfil completo do toolkit (`eslint.config.mjs`): sem `console` direto (use o logger), páginas e componentes `.tsx` não importam `@/db`, e `update`/`delete` do Drizzle exigem `where`.
+- Entradas externas validadas com Zod: formulário salvo, busca do histórico, `DATABASE_URL` e o JSON do anexo.
 
 ## Estratégia de testes
 
 - `src/lib/tax/calculate.test.ts`: alíquotas por origem, MVA ajustada, ST com frete e IPI, antecipação parcial, campos opcionais e casos-limite. Os valores esperados foram conferidos à mão.
 - `src/lib/anexo5/anexo5.test.ts`: leitura de texto e CSV, linha sem MVA, número do próximo item fora da descrição, busca por prefixo e ordenação.
 - `src/lib/format.test.ts`: leitura de números em pt-BR e formatação.
+- `src/features/historico/actions.test.ts`: recálculo no servidor, resultado do cliente ignorado, textos opcionais, entrada inválida e falha de banco sem vazar detalhes.
+- `src/features/historico/repository.test.ts`: integração com PostgreSQL real (gravação, busca, curingas do LIKE). Só roda com `TEST_DATABASE_URL`; fica como "skipped" no `pnpm check`.
+- `src/lib/env.test.ts`, `logger.test.ts`, `src/db/index.test.ts`: templates do toolkit (validação sem vazar segredos, redação de log, ciclo do pool).
 - O importador foi testado de ponta a ponta com um PDF sintético. **Ainda não foi testado com o PDF oficial do Anexo 05.**
 - Não há testes de DOM nem E2E versionados. O fluxo do simulador foi verificado com Playwright durante o setup (registro em `setup.md`). Adicione testes de interface quando o fluxo crescer.
 
@@ -41,7 +45,7 @@ Prompt reutilizável: bloco "Prompt" de `docs/prompts/13-security-review.md` do 
 Leia https://raw.githubusercontent.com/lucas020998-spec/vibe-coding-toolkit/790a895304e0c08b70a5b215c9d334f1c86b816c/docs/prompts/13-security-review.md e execute o bloco "Prompt" neste repositório (ou no diff indicado).
 ```
 
-A revisão é somente leitura. Relatórios ficam fora do repositório e privados. Superfície atual: sem autenticação, sem servidor com dados e sem segredos. O ponto de entrada externo é o arquivo importado pelo script, validado com Zod.
+A revisão é somente leitura. Relatórios ficam fora do repositório e privados. Superfície atual: Server Action `salvarSimulacao` e página `/historico` (validadas com Zod, consultas parametrizadas pelo Drizzle), `DATABASE_URL` como único segredo e o arquivo importado pelo script. **Não há autenticação**: publicado sem proteção, qualquer pessoa com o endereço lê e grava o histórico (ver `PRODUCT.md`).
 
 ## Melhoria do harness
 
@@ -49,6 +53,6 @@ Método nativo inspirado no Harness2, sem instalar o CLI. Prompt reutilizável: 
 
 ## Dependências e entrega
 
-`pnpm audit --prod` e `pnpm audit`: sem vulnerabilidades conhecidas em 28/10/2026. Rode de novo ao atualizar dependências.
+28/10/2026: `pnpm audit --prod` sem vulnerabilidades. `pnpm audit` aponta 1 moderada (GHSA-67mh-4wv8-2f99) no `esbuild` antigo usado por `drizzle-kit` → `@esbuild-kit`. É só de desenvolvimento e afeta o servidor do `esbuild`, que o projeto não usa. Sem correção no `drizzle-kit` estável; reavaliar ao atualizá-lo. Rode de novo ao atualizar dependências.
 
 Sem hooks de Git nem bloqueios de branch. Atualize este documento junto com scripts e regras.

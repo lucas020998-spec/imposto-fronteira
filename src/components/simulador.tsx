@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { Resultado } from "@/components/resultado";
+import { SalvarSimulacao } from "@/components/salvar-simulacao";
 import { anexo5 } from "@/lib/anexo5/dados";
 import { buscarPorNcm } from "@/lib/anexo5/lookup";
 import { formatarPct, lerCentavos, lerNumero } from "@/lib/format";
@@ -15,6 +16,7 @@ export function Simulador() {
   const [ncm, setNcm] = useState("");
   const [uf, setUf] = useState<UfOrigem>("SP");
   const [importado, setImportado] = useState(false);
+  const [fornecedorSimples, setFornecedorSimples] = useState(false);
   const [valor, setValor] = useState("");
   const [usarFrete, setUsarFrete] = useState(false);
   const [frete, setFrete] = useState("");
@@ -40,8 +42,20 @@ export function Simulador() {
         frete: usarFrete ? lerCentavos(frete) : undefined,
         aliquotaIpi: usarIpi ? lerNumero(ipi) : undefined,
         mva,
+        fornecedorSimples,
       }
     : undefined;
+
+  const ncmDigitos = ncm.replace(/\D/g, "");
+  const dadosSalvar = entrada && {
+    ...entrada,
+    ncm: ncmDigitos,
+    ufOrigem: uf,
+    importado,
+    fornecedorSimples,
+    cest: selecionado && lerNumero(mvaManual) === undefined ? selecionado.cest : null,
+    descricaoAnexo: selecionado && lerNumero(mvaManual) === undefined ? selecionado.descricao : null,
+  };
 
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_minmax(0,22rem)]">
@@ -94,6 +108,10 @@ export function Simulador() {
             <input type="checkbox" checked={importado} onChange={(e) => setImportado(e.target.checked)} className="accent-accent" />
             Mercadoria importada (alíquota interestadual de 4%)
           </label>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <input type="checkbox" checked={fornecedorSimples} onChange={(e) => setFornecedorSimples(e.target.checked)} className="accent-accent" />
+            Fornecedor optante do Simples Nacional (na ST, usa a MVA sem ajuste)
+          </label>
           <p className="text-sm text-muted sm:col-span-2">
             Alíquota interestadual: <strong className="text-foreground">{formatarPct(inter)}</strong>
           </p>
@@ -117,6 +135,7 @@ export function Simulador() {
         ) : (
           <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">Informe o valor dos produtos para ver o imposto.</p>
         )}
+        <SalvarSimulacao dados={dadosSalvar} />
       </div>
     </div>
   );

@@ -1,18 +1,20 @@
 # Imposto Fronteira PB
 
-Simulador do ICMS de fronteira para compras interestaduais com destino à Paraíba. O gerente de compras informa o NCM, o estado do fornecedor e o valor; o app consulta o Anexo 05 do RICMS-PB e mostra o percentual de imposto, a memória de cálculo e uma explicação passo a passo.
+Simulador do ICMS de fronteira para compras interestaduais da Marconi Pinto Metalúrgica, empresa do Simples Nacional na Paraíba. O gerente de compras informa o NCM, o estado do fornecedor e o valor; o app consulta o Anexo 05 do RICMS-PB, mostra o percentual de imposto com a memória de cálculo e guarda as simulações num histórico pesquisável.
 
 ## Rodar
 
-Requer Node.js 22+ e pnpm 10.
+Requer Node.js 22+, pnpm 10 e PostgreSQL (para o histórico).
 
 ```bash
 pnpm install
-pnpm dev            # http://localhost:3000
-pnpm check          # lint, tipos, testes e build
+cp .env.example .env.local   # preencha DATABASE_URL
+pnpm db:migrate              # cria a tabela do histórico
+pnpm dev                     # http://localhost:3000
+pnpm check                   # lint, tipos, testes e build (não precisa de banco)
 ```
 
-Não há variáveis de ambiente nem banco de dados.
+O simulador funciona sem banco; só o histórico depende dele. Detalhes em [docs/onboarding.md](docs/onboarding.md).
 
 ### Importar o Anexo 05
 

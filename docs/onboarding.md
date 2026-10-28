@@ -4,6 +4,7 @@
 
 - Node.js 22 ou mais novo (`node -v`).
 - pnpm 10 (`corepack enable` ativa a versão do `packageManager`).
+- PostgreSQL 14+ local ou um banco de desenvolvimento (só para o histórico).
 
 ## Primeira execução
 
@@ -12,7 +13,19 @@ pnpm install
 pnpm dev
 ```
 
-Abra http://localhost:3000. Não há variáveis de ambiente.
+Abra http://localhost:3000. O simulador funciona sem banco; o histórico precisa do passo abaixo.
+
+## Banco de dados
+
+1. Crie um banco de desenvolvimento, por exemplo:
+   ```bash
+   createuser -P imposto && createdb -O imposto imposto_fronteira
+   ```
+2. `cp .env.example .env.local` e preencha `DATABASE_URL=postgresql://imposto:SENHA@localhost:5432/imposto_fronteira`. O `.env.local` é ignorado pelo Git.
+3. `pnpm db:migrate` aplica o SQL de `drizzle/`.
+4. Para mudar a tabela: edite `src/db/schema/index.ts`, rode `pnpm db:generate`, revise o SQL gerado e aplique com `pnpm db:migrate`.
+
+Não use o banco de produção para testes. Em produção, provedores que separam conexão com pool e direta podem usar `DATABASE_URL_UNPOOLED` para migrações.
 
 ## Base do Anexo 05
 
@@ -27,7 +40,13 @@ Se o PDF não for lido corretamente, exporte a tabela para CSV com as colunas `c
 
 ## Verificar
 
-`pnpm check` roda lint, tipos, lint tipado, autoteste das regras, testes e build. Nada depende de rede ou credenciais.
+`pnpm check` roda lint, tipos, lint tipado, autoteste das regras, testes e build. Nada depende de rede, credenciais ou banco.
+
+Teste de integração do histórico, contra um banco descartável já migrado:
+
+```bash
+TEST_DATABASE_URL=postgresql://... pnpm vitest run src/features
+```
 
 ## Agentes
 

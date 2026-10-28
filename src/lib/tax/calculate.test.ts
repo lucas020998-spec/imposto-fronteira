@@ -45,6 +45,19 @@ describe("calcular", () => {
     expect(r.mvaAjustada).toBeUndefined();
   });
 
+  it("inclui o IPI na base da antecipação parcial do Simples, sem creditá-lo", () => {
+    const r = calcular({ valorProdutos: 100_000, frete: 5_000, aliquotaIpi: 10, aliquotaInterestadual: 12, aliquotaInterna: 20 });
+    // (1.000 + 50 + 100) × 20% − (1.000 + 50) × 12% = 230 − 126 = 104
+    expect(r).toMatchObject({ regime: "antecipacao", baseCalculo: 115_000, icmsProprio: 12_600, icmsDevido: 10_400 });
+    expect(r.percentualEfetivo).toBe(10.4);
+  });
+
+  it("usa a MVA original quando o fornecedor é do Simples", () => {
+    const r = calcular({ valorProdutos: 100_000, aliquotaInterestadual: 12, aliquotaInterna: 20, mva: 33, fornecedorSimples: true });
+    // 1.000 × 1,33 × 20% − 1.000 × 12% = 266 − 120 = 146
+    expect(r).toMatchObject({ mvaAjustada: 33, baseCalculo: 133_000, icmsDevido: 14_600 });
+  });
+
   it("trata frete e IPI como opcionais", () => {
     const comZero = calcular({ valorProdutos: 50_000, frete: 0, aliquotaIpi: 0, aliquotaInterestadual: 12, aliquotaInterna: 20, mva: 40 });
     const semCampos = calcular({ valorProdutos: 50_000, aliquotaInterestadual: 12, aliquotaInterna: 20, mva: 40 });

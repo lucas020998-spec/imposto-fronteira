@@ -15,7 +15,7 @@ export function Resultado({ entrada, resultado: r }: Props) {
     ...(st
       ? [
           ["MVA original", formatarPct(entrada.mva ?? 0)],
-          ["MVA ajustada", formatarPct(r.mvaAjustada ?? 0)],
+          [entrada.fornecedorSimples ? "MVA aplicada (fornecedor do Simples)" : "MVA ajustada", formatarPct(r.mvaAjustada ?? 0)],
         ] as [string, string][]
       : []),
     [st ? "Base de cálculo da ST" : "Base de cálculo", formatarMoeda(r.baseCalculo)],
