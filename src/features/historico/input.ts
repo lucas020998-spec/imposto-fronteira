@@ -8,16 +8,17 @@ const textoOpcional = (max: number) =>
 /** Dados enviados pelo formulário. O resultado é recalculado no servidor, nunca aceito do cliente. */
 export const salvarSimulacaoSchema = z.object({
   ncm: z.string().regex(/^\d{4,8}$/, "Informe o NCM com 4 a 8 dígitos"),
+  /** Item do Anexo 05 escolhido; o servidor busca MVA, alíquota e FUNCEP no próprio anexo. */
   cest: z.string().max(9).nullable().optional(),
-  descricaoAnexo: z.string().max(500).nullable().optional(),
+  variante: z.string().max(80).nullable().optional(),
   ufOrigem: z.enum(UFS),
   importado: z.boolean(),
   fornecedorSimples: z.boolean(),
   valorProdutos: z.number().int().positive().max(1e13),
   frete: z.number().int().min(0).max(1e13).optional(),
   aliquotaIpi: percentual.optional(),
-  aliquotaInterna: percentual,
-  mva: percentual.optional(),
+  aliquotaInterna: percentual.optional(),
+  mvaManual: percentual.optional(),
   fornecedor: textoOpcional(120),
   observacao: textoOpcional(1000),
 });

@@ -6,6 +6,11 @@ interface Props {
   resultado: ResultadoCalculo;
 }
 
+function rotuloMva(e: Entrada) {
+  if (e.fornecedorSimples) return "MVA aplicada (fornecedor do Simples)";
+  return e.mvaAjustada !== undefined ? "MVA ajustada (Anexo 05)" : "MVA ajustada (calculada)";
+}
+
 export function Resultado({ entrada, resultado: r }: Props) {
   const st = r.regime === "st";
   const linhas: [string, string][] = [
@@ -15,11 +20,14 @@ export function Resultado({ entrada, resultado: r }: Props) {
     ...(st
       ? [
           ["MVA original", formatarPct(entrada.mva ?? 0)],
-          [entrada.fornecedorSimples ? "MVA aplicada (fornecedor do Simples)" : "MVA ajustada", formatarPct(r.mvaAjustada ?? 0)],
+          [rotuloMva(entrada), formatarPct(r.mvaAjustada ?? 0)],
         ] as [string, string][]
       : []),
     [st ? "Base de cálculo da ST" : "Base de cálculo", formatarMoeda(r.baseCalculo)],
-    [`ICMS na PB (${formatarPct(entrada.aliquotaInterna)} da base)`, formatarMoeda(r.icmsDevido + r.icmsProprio)],
+    [
+      `ICMS na PB (${formatarPct(entrada.aliquotaInterna)}${entrada.fcp ? ` + ${formatarPct(entrada.fcp)} FUNCEP` : ""} da base)`,
+      formatarMoeda(r.icmsDevido + r.icmsProprio),
+    ],
     [`(−) ICMS do fornecedor (${formatarPct(entrada.aliquotaInterestadual)})`, formatarMoeda(r.icmsProprio)],
   ];
 

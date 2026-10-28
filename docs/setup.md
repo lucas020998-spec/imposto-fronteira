@@ -5,7 +5,7 @@
 - Data: 28/10/2026.
 - Toolkit: Vibe Coding Toolkit, revisão `790a895304e0c08b70a5b215c9d334f1c86b816c` (fork `lucas020998-spec/vibe-coding-toolkit`, idêntica ao `main` de `soumatheusgomes/vibe-coding-toolkit` na data). Prompt executado: `docs/prompts/11-next-project-bootstrap.md`.
 - Cliente: Claude Code em sessão na nuvem (Linux), Node 22.22.0, pnpm 10.28.0. Modelo e autenticação da sessão preservados; subagentes usam o modelo da sessão.
-- A rede da sessão bloqueia `sefaz.pb.gov.br`, por isso o PDF oficial do Anexo 05 não pôde ser baixado.
+- A rede da sessão bloqueia `sefaz.pb.gov.br`; o PDF oficial do Anexo 05 chegou pelo GitHub (commit do usuário) e está em `fontes/`.
 
 ## Decisões e fontes
 
@@ -55,7 +55,9 @@
 | `pnpm check` | Validado | Lint, tipos, lint tipado, regras, 17 testes e build sem erros |
 | Auditoria | Validado | `--prod` limpo; 1 moderada só de desenvolvimento (esbuild via drizzle-kit), detalhe em `quality.md` |
 | Importador com PDF sintético | Validado | 3 itens extraídos corretamente (CEST, 2 NCMs, MVA 71,78%, item sem MVA) |
-| Importador com PDF oficial | Pendente | Site da SEFAZ-PB bloqueado na sessão |
+| Importador com PDF oficial (4ª etapa) | Validado | PDF de 194 páginas, atualizado em 09/07/2025: 657 entradas, 491 CEST. Comparação com todos os CEST do texto do PDF: faltam só os 11 revogados, o 01.999.00 (sem NCM, com aviso) e 6 citados em descrições. 16 itens de 11 segmentos conferidos contra o texto (NCMs, MVA original, ajustadas 4/7/12%, variantes e alíquota/FUNCEP) |
+| Simulador com o anexo real | Validado | Playwright: 7610.10.00 de SP → CEST 10.071.00, MVA ajustada 53,45%, 23,69% (R$ 236,90); de PE → 17,04%; fornecedor do Simples → MVA 32%; 3917.33.00 → 3 opções; nafta (06.019.00) → pede MVA manual; simulação salva e listada no histórico com MVA aplicada 45,2%; sem erros de console |
+| `pnpm db:sql` | Validado | SQL gerado aplicado num banco novo com `psql`; depois `drizzle-kit migrate` não reaplicou nada e os hashes ficaram iguais aos de um banco migrado pelo Drizzle |
 | Histórico (2ª etapa) | Validado | PostgreSQL 16 local: `db:generate` → SQL revisado → `db:migrate`. Playwright: simulação de R$ 1.000 de PE com frete e IPI (antecipação 10,4%, R$ 104,00) salva com fornecedor e observação, campos limpos, item no topo de `/historico`, busca "esquadrias" acha 1, busca inexistente mostra estado vazio, 390px sem rolagem, sem erros de console. Linha conferida no banco. Banco local apenas; produção pendente |
 | Senha de acesso (3ª etapa) | Validado | `next start` + curl: `/` e `/historico?q=a` sem cookie → 307 para `/entrar` (com `para`). Playwright: senha errada mostra "Senha incorreta."; senha certa volta a `/historico`; cookie `sessao` httpOnly, SameSite=Lax, sem a senha no valor; simulação salva com sessão (linha conferida no banco); "Sair" volta a `/entrar` e `/historico` fica bloqueado; sem erros de console. POST de Server Action sem cookie → 307 |
 | Envio ao GitHub | Validado | `git push -u origin main` para `lucas020998-spec/imposto-fronteira` |
@@ -70,8 +72,8 @@
 
 ## Pendências e próxima entrega
 
-1. **Importar o PDF oficial do Anexo 05** e conferir 10 itens de segmentos diferentes (próxima entrega).
-2. Escolher o PostgreSQL de produção.
+1. **Publicar**: criar o banco no Neon, aplicar as migrações e definir `DATABASE_URL` e `APP_PASSWORD` na hospedagem (próxima entrega).
+2. Reimportar o Anexo 05 a cada nova versão da SEFAZ-PB.
 3. Validar com a contabilidade as regras do Simples (IPI na base, MVA sem ajuste para fornecedor do Simples, cálculo "por dentro") e de arredondamento.
 4. Preparar a máquina (prompt 10 do toolkit): Ponytail, Caveman, Superpowers, RTK, Context7, Graphify e agent-browser.
 5. Definir `APP_PASSWORD` e `DATABASE_URL` na hospedagem ao publicar. Considerar uma senha mais longa.

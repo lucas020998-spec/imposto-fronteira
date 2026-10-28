@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { temSessao } from "@/features/acesso/sessao";
 import { logger } from "@/lib/logger";
+import { anexo5 } from "@/lib/anexo5/dados";
+import { itemEscolhido } from "@/lib/anexo5/lookup";
+import { montarEntrada } from "@/lib/simulacao";
 import { calcular } from "@/lib/tax/calculate";
-import { aliquotaInterestadual } from "@/lib/tax/rates";
 import { salvarSimulacaoSchema, type SalvarSimulacaoInput } from "./input";
 import { inserirSimulacao } from "./repository";
 
@@ -16,23 +18,35 @@ export async function salvarSimulacao(input: SalvarSimulacaoInput): Promise<Resu
   if (!parsed.success) return { ok: false, erro: parsed.error.issues[0]?.message ?? "Dados inválidos" };
 
   const d = parsed.data;
-  const inter = aliquotaInterestadual(d.ufOrigem, d.importado);
-  const r = calcular({ ...d, aliquotaInterestadual: inter });
+  const item = d.cest ? itemEscolhido(anexo5.itens, d.ncm, d.cest, d.variante ?? null) : undefined;
+  if (d.cest && !item) return { ok: false, erro: "Item do Anexo 05 não encontrado para este NCM." };
+  const montada = montarEntrada(d, item);
+  if (!montada.ok) return { ok: false, erro: montada.motivo };
+  const e = montada.entrada;
+  const r = calcular(e);
 
   try {
     const id = await inserirSimulacao({
-      ...d,
-      cest: d.cest ?? null,
-      descricaoAnexo: d.descricaoAnexo ?? null,
+      ncm: d.ncm,
+      cest: item?.cest ?? null,
+      variante: item?.variante ?? null,
+      descricaoAnexo: item?.descricao ?? null,
+      ufOrigem: d.ufOrigem,
+      importado: d.importado,
+      fornecedorSimples: d.fornecedorSimples,
+      valorProdutos: d.valorProdutos,
       frete: d.frete ?? null,
       aliquotaIpi: d.aliquotaIpi ?? null,
-      mva: d.mva ?? null,
-      fornecedor: d.fornecedor ?? null,
-      observacao: d.observacao ?? null,
-      aliquotaInterestadual: inter,
+      aliquotaInterestadual: e.aliquotaInterestadual,
+      aliquotaInterna: e.aliquotaInterna,
+      fcp: e.fcp ?? null,
+      mva: e.mva ?? null,
+      mvaAplicada: r.mvaAjustada ?? null,
       regime: r.regime,
       icmsDevido: r.icmsDevido,
       percentualEfetivo: r.percentualEfetivo,
+      fornecedor: d.fornecedor ?? null,
+      observacao: d.observacao ?? null,
     });
     revalidatePath("/historico");
     return { ok: true, id };

@@ -54,6 +54,10 @@ export default function ComoCalcular() {
           <li>
             <strong>Ajuste a MVA</strong> para compensar a diferença de alíquotas:<br />
             (1 + {P(st.mva)}) × (1 − 12%) ÷ (1 − 20%) − 1 = <strong>{P(rSt.mvaAjustada ?? 0)}</strong>
+            <br />
+            <span className="text-sm text-muted">
+              Na maioria dos itens, o Anexo 05 já publica a MVA ajustada para 4%, 7% e 12%, e o simulador usa esse valor.
+            </span>
           </li>
           <li>
             <strong>Base da ST</strong> = (produtos + frete + IPI) × (1 + MVA ajustada)<br />
@@ -61,6 +65,10 @@ export default function ComoCalcular() {
           </li>
           <li>
             <strong>Imposto da PB</strong> = base × 20% = {R(rSt.icmsDevido + rSt.icmsProprio)}
+            <br />
+            <span className="text-sm text-muted">
+              Alguns itens têm alíquota própria no anexo (ex.: bebidas, 25% + 2% de FUNCEP); o simulador soma as duas.
+            </span>
           </li>
           <li>
             <strong>Desconte o ICMS do fornecedor</strong> = (produtos + frete) × 12% = {R(rSt.icmsProprio)}
@@ -106,7 +114,7 @@ export default function ComoCalcular() {
       <section className="space-y-2 text-sm text-muted">
         <h2 className="text-base font-semibold text-foreground">Limites da simulação</h2>
         <ul className="list-disc space-y-1 pl-5">
-          <li>Não trata benefícios fiscais, regimes especiais, FCP nem produtos com preço de pauta.</li>
+          <li>Não trata benefícios fiscais nem regimes especiais. Itens com pauta, PMPF ou valor AD REM pedem a MVA manual.</li>
           <li>Frete pago à parte (FOB, com CT-e próprio) não entra na base.</li>
           <li>Não trata compras de matéria-prima para industrialização nem de uso e consumo, que podem ter regras próprias.</li>
           <li>A MVA ajustada é arredondada em duas casas decimais.</li>

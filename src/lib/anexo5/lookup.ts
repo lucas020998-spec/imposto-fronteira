@@ -7,6 +7,11 @@ export interface Correspondencia {
   prefixo: string;
 }
 
+/** Item exato escolhido no simulador (CEST + variante), desde que cubra o NCM informado. */
+export function itemEscolhido(itens: ItemAnexo5[], ncm: string, cest: string, variante: string | null) {
+  return buscarPorNcm(itens, ncm).find((c) => c.item.cest === cest && c.item.variante === variante)?.item;
+}
+
 /**
  * Itens do anexo cujo NCM é prefixo do NCM consultado (ex.: "8708" cobre "8708.99.90").
  * Ordena do prefixo mais específico para o mais genérico.

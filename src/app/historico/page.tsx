@@ -61,11 +61,13 @@ export default async function Historico({ searchParams }: PageProps<"/historico"
               <strong className="text-lg">{formatarPct(s.percentualEfetivo)}</strong>{" "}
               <span className="text-muted">
                 · {formatarMoeda(s.icmsDevido)} sobre {formatarMoeda(s.valorProdutos)} ·{" "}
-                {s.regime === "st" ? `ST, MVA ${formatarPct(s.mva ?? 0)}` : "antecipação parcial"}
+                {s.regime === "st" ? `ST, MVA ${formatarPct(s.mvaAplicada ?? s.mva ?? 0)}` : "antecipação parcial"}
                 {s.fornecedorSimples && " · fornecedor do Simples"}
               </span>
             </p>
-            {s.descricaoAnexo && <p className="mt-1 text-xs text-muted">CEST {s.cest} · {s.descricaoAnexo}</p>}
+            {s.descricaoAnexo && (
+              <p className="mt-1 text-xs text-muted">CEST {s.cest}{s.variante && ` · ${s.variante}`} · {s.descricaoAnexo}</p>
+            )}
             {s.observacao && <p className="mt-2 whitespace-pre-line border-l-2 border-accent pl-3">{s.observacao}</p>}
           </li>
         ))}

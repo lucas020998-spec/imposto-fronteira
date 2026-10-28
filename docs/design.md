@@ -15,7 +15,9 @@ Ferramenta de trabalho para o gerente de compras: sóbria, direta, em pt-BR. O n
 - Todos os campos têm `<label>`; grupos usam `<fieldset>`/`<legend>`.
 - O resultado tem `aria-live="polite"` e é recalculado a cada digitação, sem botão.
 - Frete e IPI ficam atrás de caixas de seleção: o campo só aparece quando marcado.
-- Itens do anexo com o mesmo NCM aparecem como botões de opção, com CEST, MVA e descrição.
+- Itens do anexo com o mesmo NCM aparecem como botões de opção, com CEST, variante, MVA original e ajustada para a origem escolhida, alíquota especial e descrição.
+- Item sem MVA percentual mostra o motivo no lugar do resultado e pede a MVA manual.
+- A alíquota interna fica vazia por padrão; o texto de exemplo mostra o valor automático (do anexo ou geral).
 - Mensagens de estado do NCM ficam abaixo do campo e ligadas por `aria-describedby`.
 - "Salvar simulação" fica desativado sem NCM e valor, mostra "Salvando…" durante o envio e anuncia o resultado com `role="status"`; após salvar, limpa fornecedor e observação e oferece link para o histórico.
 - O histórico usa `<form role="search">` com GET (`?q=`), então a busca funciona sem JavaScript e pode ser favoritada. Datas no fuso de João Pessoa.

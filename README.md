@@ -18,13 +18,13 @@ O simulador funciona sem banco; só o histórico depende dele. Detalhes em [docs
 
 ### Importar o Anexo 05
 
-Baixe o PDF vigente do Anexo 05 no site da SEFAZ-PB e rode:
+A base atual vem do PDF atualizado em 09/07/2025, guardado em `fontes/`. Quando a SEFAZ-PB publicar outra versão, salve o PDF em `fontes/` e rode:
 
 ```bash
-pnpm anexo5:import caminho/ANEXO_05.pdf "Anexo 05 RICMS-PB, versão de DD/MM/AAAA"
+pnpm anexo5:import fontes/ARQUIVO.pdf "Anexo 05 RICMS-PB, atualizado em DD/MM/AAAA"
 ```
 
-O comando grava `src/data/anexo5.json`. Confira alguns itens com o PDF antes de usar. Também aceita CSV com as colunas `cest;ncm;descricao;mva`.
+O comando grava `src/data/anexo5.json`. Confira alguns itens com o PDF antes de publicar. Também aceita CSV com as colunas `cest;ncm;descricao;mva`.
 
 ## Documentação
 
@@ -38,4 +38,4 @@ O comando grava `src/data/anexo5.json`. Confira alguns itens com o PDF antes de 
 
 ## Próxima entrega
 
-Importar o PDF oficial do Anexo 05 e conferir 10 itens de segmentos diferentes contra o documento.
+Publicar o app com o banco no Neon (passo a passo em [docs/onboarding.md](docs/onboarding.md#banco-de-produção-neon)).

@@ -14,6 +14,10 @@ export interface Entrada {
   aliquotaIpi?: number;
   /** MVA original do Anexo 05. Sem MVA, o cálculo é de antecipação parcial. */
   mva?: number;
+  /** MVA ajustada publicada no Anexo 05 para a alíquota interestadual; sem ela, usa a fórmula. */
+  mvaAjustada?: number;
+  /** Adicional do FUNCEP em pontos percentuais, somado à alíquota interna no débito. */
+  fcp?: number;
   /** Fornecedor optante do Simples: a ST usa a MVA original, sem ajuste (Conv. ICMS 142/2018, cl. 11, § 1º). */
   fornecedorSimples?: boolean;
 }
@@ -48,17 +52,20 @@ export function calcular(e: Entrada): Resultado {
   const baseIcmsProprio = e.valorProdutos + frete;
   const icmsProprio = Math.round(baseIcmsProprio * pct(e.aliquotaInterestadual));
 
+  const aliquotaDebito = e.aliquotaInterna + (e.fcp ?? 0);
   if (e.mva === undefined) {
     // Antecipação parcial do Simples: diferença entre alíquotas, sem agregar MVA. O IPI entra na
     // base porque é custo da compra para quem não se credita dele.
     const baseCalculo = baseIcmsProprio + valorIpi;
-    const debito = Math.round(baseCalculo * pct(e.aliquotaInterna));
+    const debito = Math.round(baseCalculo * pct(aliquotaDebito));
     return resultado("antecipacao", e, { valorIpi, frete, baseCalculo, icmsProprio, debito });
   }
 
-  const mvaAj = e.fornecedorSimples ? e.mva : mvaAjustada(e.mva, e.aliquotaInterestadual, e.aliquotaInterna);
+  const mvaAj = e.fornecedorSimples
+    ? e.mva
+    : (e.mvaAjustada ?? mvaAjustada(e.mva, e.aliquotaInterestadual, e.aliquotaInterna));
   const baseCalculo = Math.round((e.valorProdutos + frete + valorIpi) * (1 + pct(mvaAj)));
-  const debito = Math.round(baseCalculo * pct(e.aliquotaInterna));
+  const debito = Math.round(baseCalculo * pct(aliquotaDebito));
   return { ...resultado("st", e, { valorIpi, frete, baseCalculo, icmsProprio, debito }), mvaAjustada: mvaAj };
 }
 

@@ -9,6 +9,7 @@ export const simulacoes = pgTable(
     criadaEm: timestamp("criada_em", { withTimezone: true }).notNull().defaultNow(),
     ncm: varchar("ncm", { length: 8 }).notNull(),
     cest: varchar("cest", { length: 9 }),
+    variante: varchar("variante", { length: 80 }),
     descricaoAnexo: text("descricao_anexo"),
     ufOrigem: varchar("uf_origem", { length: 2 }).notNull(),
     importado: boolean("importado").notNull(),
@@ -18,7 +19,11 @@ export const simulacoes = pgTable(
     aliquotaIpi: numeric("aliquota_ipi", { precision: 5, scale: 2, mode: "number" }),
     aliquotaInterestadual: numeric("aliquota_interestadual", { precision: 5, scale: 2, mode: "number" }).notNull(),
     aliquotaInterna: numeric("aliquota_interna", { precision: 5, scale: 2, mode: "number" }).notNull(),
+    fcp: numeric("fcp", { precision: 5, scale: 2, mode: "number" }),
+    /** MVA original (do anexo ou digitada). */
     mva: numeric("mva", { precision: 7, scale: 2, mode: "number" }),
+    /** MVA usada no cálculo: ajustada (anexo ou fórmula) ou original, se o fornecedor é do Simples. */
+    mvaAplicada: numeric("mva_aplicada", { precision: 7, scale: 2, mode: "number" }),
     regime: varchar("regime", { length: 12 }).notNull(),
     icmsDevido: bigint("icms_devido", { mode: "number" }).notNull(),
     percentualEfetivo: numeric("percentual_efetivo", { precision: 7, scale: 2, mode: "number" }).notNull(),

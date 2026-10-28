@@ -16,7 +16,8 @@
     "anexo5:import": "node scripts/import-anexo5.mts",
     "check": "pnpm lint && pnpm typecheck && pnpm lint:typed && pnpm lint:rules && pnpm test && pnpm build",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:sql": "node scripts/sql-migracoes.mts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

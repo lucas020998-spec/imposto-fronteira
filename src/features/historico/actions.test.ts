@@ -11,7 +11,7 @@ vi.mock("@/features/acesso/sessao", () => ({ temSessao: vi.fn() }));
 
 const base = {
   ncm: "87089990", ufOrigem: "PE" as const, importado: false, fornecedorSimples: false,
-  valorProdutos: 100_000, frete: 5_000, aliquotaIpi: 10, aliquotaInterna: 20, mva: 33,
+  valorProdutos: 100_000, frete: 5_000, aliquotaIpi: 10, aliquotaInterna: 20, mvaManual: 33,
 };
 
 beforeEach(() => {
@@ -27,6 +27,24 @@ describe("salvarSimulacao", () => {
       ncm: "87089990", aliquotaInterestadual: 12, regime: "st",
       icmsDevido: 21_049, percentualEfetivo: 21.05, fornecedor: "Aço Forte", observacao: null,
     }));
+  });
+
+  it("busca MVA e alíquota no Anexo 05 pelo CEST, sem confiar no cliente", async () => {
+    // Tubos de plástico para construção (CEST 10.006.00): MVA 33%, ajustada 54,61% para 7%.
+    const r = await salvarSimulacao({
+      ncm: "39173300", cest: "10.006.00", variante: null, ufOrigem: "SP", importado: false,
+      fornecedorSimples: false, valorProdutos: 100_000, mva: 99,
+    } as never);
+    expect(r.ok).toBe(true);
+    expect(inserirSimulacao).toHaveBeenCalledWith(expect.objectContaining({
+      cest: "10.006.00", mva: 33, mvaAplicada: 54.61, aliquotaInterna: 20, icmsDevido: 23_922,
+    }));
+  });
+
+  it("recusa CEST que não cobre o NCM informado", async () => {
+    const r = await salvarSimulacao({ ...base, mvaManual: undefined, ncm: "87089990", cest: "10.006.00", variante: null });
+    expect(r).toEqual({ ok: false, erro: expect.stringContaining("não encontrado") });
+    expect(inserirSimulacao).not.toHaveBeenCalled();
   });
 
   it("ignora valores de resultado enviados pelo cliente", async () => {

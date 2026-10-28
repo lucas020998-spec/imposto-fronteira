@@ -11,6 +11,7 @@
 | `pnpm test` | Testes Vitest em Node |
 | `pnpm build` | Build de produção; `/` e `/como-calcular` estáticas, `/historico` dinâmica |
 | `pnpm db:generate` | Gera o SQL da migração sem conectar; revise antes de aplicar |
+| `pnpm db:sql` | Junta as migrações num SQL para colar no editor do provedor, com o mesmo registro do `db:migrate` |
 | `pnpm check` | Todos os acima, nessa ordem. Rode antes de concluir qualquer mudança |
 
 O build não roda lint; use `pnpm lint` ou `pnpm check`.
@@ -25,13 +26,14 @@ O build não roda lint; use `pnpm lint` ou `pnpm check`.
 ## Estratégia de testes
 
 - `src/lib/tax/calculate.test.ts`: alíquotas por origem, MVA ajustada, ST com frete e IPI, antecipação parcial, campos opcionais e casos-limite. Os valores esperados foram conferidos à mão.
-- `src/lib/anexo5/anexo5.test.ts`: leitura de texto e CSV, linha sem MVA, número do próximo item fora da descrição, busca por prefixo e ordenação.
+- `src/lib/anexo5/anexo5.test.ts`: geometria da tabela (colunas e linhas pelas bordas), linhas cortadas por quebra de página, revogados, redações substituídas de item e de segmento, variantes de MVA, MVA por procedência, alíquota com FUNCEP, CSV e busca.
+- `src/lib/simulacao.test.ts`: MVA ajustada publicada por origem, alíquota e FUNCEP do item, MVA manual e item sem MVA percentual.
 - `src/lib/format.test.ts`: leitura de números em pt-BR e formatação.
 - `src/features/historico/actions.test.ts`: recálculo no servidor, resultado do cliente ignorado, textos opcionais, entrada inválida e falha de banco sem vazar detalhes.
 - `src/features/historico/repository.test.ts`: integração com PostgreSQL real (gravação, busca, curingas do LIKE). Só roda com `TEST_DATABASE_URL`; fica como "skipped" no `pnpm check`.
 - `src/lib/auth.test.ts`: senha certa e errada, cookie válido e adulterado, troca de senha invalida sessões, senha ausente bloqueia tudo, redirecionamento só para caminhos internos.
 - `src/lib/env.test.ts`, `logger.test.ts`, `src/db/index.test.ts`: templates do toolkit (validação sem vazar segredos, redação de log, ciclo do pool).
-- O importador foi testado de ponta a ponta com um PDF sintético. **Ainda não foi testado com o PDF oficial do Anexo 05.**
+- Importador validado com o PDF oficial (atualizado em 09/07/2025): todos os CEST do texto do PDF aparecem na base, exceto os 11 revogados, o item 999.0 (sem NCM) e 6 citados só dentro de descrições; 16 itens de 11 segmentos conferidos manualmente. Repita a conferência a cada nova versão.
 - Não há testes de DOM nem E2E versionados. O fluxo do simulador foi verificado com Playwright durante o setup (registro em `setup.md`). Adicione testes de interface quando o fluxo crescer.
 
 ## Revisão depois de implementar ou corrigir

@@ -28,15 +28,16 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Build: `pnpm build`
 - Tudo: `pnpm check`
 - Importar o Anexo 05: `pnpm anexo5:import <arquivo.pdf|csv> ["fonte"]`
-- Banco: `pnpm db:generate` (gera SQL, sem conectar) e `pnpm db:migrate` (aplica no `DATABASE_URL`)
+- Banco: `pnpm db:generate` (gera SQL, sem conectar), `pnpm db:migrate` (aplica no `DATABASE_URL`) e `pnpm db:sql` (SQL único para colar no editor do Neon)
 - Integração com banco: `TEST_DATABASE_URL=... pnpm vitest run src/features`
 
 ## Regras do projeto
 
 - O cálculo fiscal vive só em `src/lib/tax/`. Toda mudança de regra vem com teste em `calculate.test.ts` e atualização de `PRODUCT.md` e da página `src/app/como-calcular`.
 - Dinheiro em centavos inteiros; alíquotas e MVA em percentual. Não use ponto flutuante para somar valores em reais.
-- `src/data/anexo5.json` é gerado pelo importador. Não edite à mão nem invente NCM/MVA: dados fiscais vêm do PDF oficial da SEFAZ-PB.
-- `src/lib/anexo5/parse.ts` e `schema.ts` também rodam em Node pelo script de importação; mantenha imports relativos com extensão `.ts` neles.
+- `src/data/anexo5.json` é gerado pelo importador a partir do PDF em `fontes/`. Não edite à mão nem invente NCM/MVA: dados fiscais vêm do PDF oficial da SEFAZ-PB. Ao reimportar, confira uma amostra e os avisos do comando.
+- `montarEntrada()` (`src/lib/simulacao.ts`) é a única ponte entre formulário, anexo e cálculo; cliente e servidor usam a mesma.
+- `src/lib/anexo5/parse.ts`, `tabela.ts` e `schema.ts` também rodam em Node pelo script de importação; mantenha imports relativos com extensão `.ts` neles.
 - Histórico: o servidor sempre recalcula o resultado antes de gravar; nunca confie em valores calculados no cliente. Acesso ao banco só em `src/features/*/repository.ts`.
 - Migrações: gere com `db:generate`, revise o SQL e aplique só no banco certo. Nunca migre em build, import ou requisição; não use `db:push`.
 - Logs com o `logger` (Pino), sem dados de formulário, senha nem `DATABASE_URL`.

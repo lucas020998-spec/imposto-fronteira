@@ -37,9 +37,11 @@ src/
     ├── tax/rates.ts             # UFs, alíquota interestadual por origem, interna da PB
     ├── tax/calculate.ts         # ST com MVA ajustada e antecipação parcial
     ├── anexo5/schema.ts         # formato validado da base (Zod)
-    ├── anexo5/parse.ts          # texto do PDF ou CSV → itens
+    ├── anexo5/tabela.ts         # geometria do PDF (textos + bordas) → linhas e colunas
+    ├── anexo5/parse.ts          # linhas → itens vigentes (MVAs, alíquota, notas de revogação) ou CSV
     ├── anexo5/lookup.ts         # busca de NCM por prefixo
     ├── anexo5/dados.ts          # carrega e valida o JSON
+    ├── simulacao.ts             # formulário + item do anexo → entrada do cálculo (cliente e servidor)
     ├── format.ts                # leitura e formatação pt-BR
     ├── env.ts, env-schema.ts    # DATABASE_URL e LOG_LEVEL validados (templates do toolkit)
     ├── logger.ts                # Pino com redação de segredos
@@ -47,18 +49,20 @@ src/
     └── utils.ts                 # cn() do toolkit
 drizzle/                         # SQL versionado das migrações
 scripts/
-├── import-anexo5.mts            # PDF/CSV → src/data/anexo5.json
+├── import-anexo5.mts            # PDF/CSV → src/data/anexo5.json (lê textos e bordas com unpdf/pdf.js)
+├── sql-migracoes.mts            # `pnpm db:sql`: migrações num SQL só, para o editor do Neon
 └── verify-quality-rules.mjs     # autoteste das regras de lint
 eslint-rules/                    # regras do toolkit (perfil completo)
+fontes/                          # PDF oficial do Anexo 05 usado na importação
 ```
 
 ## Fluxo
 
-1. `pnpm anexo5:import` extrai o texto do PDF com `unpdf`, usa cada CEST (`NN.NNN.NN`) como início de linha, lê os NCMs seguintes e o primeiro percentual como MVA, valida com Zod e grava o JSON.
+1. `pnpm anexo5:import` lê cada página com pdf.js (via `unpdf`): textos com posição e os retângulos desenhados. `tabela.ts` acha as colunas pelas bordas divididas em 7 células e separa as linhas pelas bordas que atravessam a coluna ITEM; textos fora da tabela viram títulos ou notas. `parse.ts` junta linhas cortadas por quebra de página (o CEST identifica a linha), descarta itens com nota "Revogado o item…" e redações anteriores a "Nova redação dada ao item/segmento…", separa variantes de MVA (contrato de fidelidade, listas de medicamentos, procedência) e lê alíquota e FUNCEP. O resultado é validado com Zod e gravado.
 2. `dados.ts` importa o JSON no build e valida com o mesmo schema.
-3. `simulador.tsx` busca o NCM digitado por prefixo (`lookup.ts`), monta a `Entrada` e chama `calcular()` a cada mudança. Tudo roda no navegador.
+3. `simulador.tsx` busca o NCM digitado por prefixo (`lookup.ts`), monta a entrada com `montarEntrada()` (MVA ajustada publicada para a origem, alíquota e FUNCEP do item) e chama `calcular()` a cada mudança, no navegador.
 4. `como-calcular/page.tsx` chama `calcular()` no build com exemplos fixos, então a explicação nunca diverge do motor.
-5. "Salvar simulação" chama a Server Action `salvarSimulacao`, que valida com Zod, recalcula com `calcular()` (o resultado do cliente é ignorado) e grava via `repository.ts`. Erros de banco viram mensagem genérica e log só com o código do erro.
+5. "Salvar simulação" chama a Server Action `salvarSimulacao` com NCM, CEST e variante. O servidor valida com Zod, busca o item no próprio anexo (`itemEscolhido`), monta a entrada com a mesma `montarEntrada()` e recalcula; MVA e resultado vindos do cliente são ignorados. Erros de banco viram mensagem genérica e log só com o código do erro.
 6. Acesso: `entrar` compara a senha com `APP_PASSWORD` em tempo constante (espera 1 s se errar) e grava o cookie `sessao` (httpOnly, SameSite=Lax, Secure em produção, 30 dias) com um HMAC derivado da senha. O proxy valida o cookie em toda requisição; `salvarSimulacao` e `/historico` validam de novo com `temSessao()`. O redirecionamento pós-login só aceita caminhos internos.
 7. `/historico` lê `?q=`, chama `listarSimulacoes` (ILIKE em NCM, fornecedor, observação e descrição, com curingas escapados, limite de 50) e mostra um aviso se o banco estiver inacessível.
 
@@ -66,13 +70,13 @@ eslint-rules/                    # regras do toolkit (perfil completo)
 
 ### Histórico (PostgreSQL)
 
-Tabela `simulacoes` (`src/db/schema/index.ts`, SQL em `drizzle/0000_simulacoes.sql`): entrada (NCM, CEST, descrição, UF, importado, fornecedor do Simples, valores em centavos `bigint`, alíquotas e MVA `numeric`), resultado (regime, ICMS devido, percentual), `fornecedor` e `observacao` opcionais e `criada_em` com índice decrescente. Não há chaves estrangeiras nem dados pessoais além do nome do fornecedor.
+Tabela `simulacoes` (`src/db/schema/index.ts`, SQL em `drizzle/0000_simulacoes.sql` e `0001_variante_fcp_mva_aplicada.sql`): entrada (NCM, CEST, variante, descrição, UF, importado, fornecedor do Simples, valores em centavos `bigint`, alíquotas, FUNCEP, MVA original e MVA aplicada `numeric`), resultado (regime, ICMS devido, percentual), `fornecedor` e `observacao` opcionais e `criada_em` com índice decrescente. Não há chaves estrangeiras nem dados pessoais além do nome do fornecedor.
 
 Ciclo: alterar o schema → `pnpm db:generate` → revisar o SQL → `pnpm db:migrate` no banco certo. Nunca migrar durante build ou requisição. Pool de até 5 conexões, criado no primeiro uso; o build e os testes não precisam de banco.
 
 ### Anexo 05
 
-`src/data/anexo5.json`: `{ fonte, importadoEm, itens: [{ cest, ncms[], descricao, mva | null }] }`. NCMs sem pontos, de 2 a 8 dígitos (prefixos). `mva: null` indica item sem MVA no anexo. Hoje o arquivo está vazio: o PDF oficial ainda não foi importado.
+`src/data/anexo5.json`: `{ fonte, importadoEm, itens: [...] }`, uma entrada por item e variante: `segmento`, `item`, `cest`, `ncms[]` (prefixos sem pontos, 2 a 8 dígitos), `descricao`, `variante`, `mva` (original), `mvaAjustada` (`{4, 7, 12}` publicadas), `mvaTexto` (AD REM, PMPF…), `aliquota`, `fcp` e `aliquotaTexto`. Fonte atual: PDF atualizado em 09/07/2025, 657 entradas, 491 CEST, cerca de 23 KB comprimido no navegador.
 
 ## Decisões
 

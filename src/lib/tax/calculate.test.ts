@@ -58,6 +58,23 @@ describe("calcular", () => {
     expect(r).toMatchObject({ mvaAjustada: 33, baseCalculo: 133_000, icmsDevido: 14_600 });
   });
 
+  it("prefere a MVA ajustada publicada no anexo à fórmula", () => {
+    const r = calcular({ valorProdutos: 100_000, aliquotaInterestadual: 7, aliquotaInterna: 20, mva: 33, mvaAjustada: 54.61 });
+    // 1.000 × 1,5461 × 20% − 1.000 × 7% = 309,22 − 70 = 239,22
+    expect(r).toMatchObject({ mvaAjustada: 54.61, baseCalculo: 154_610, icmsDevido: 23_922 });
+  });
+
+  it("ignora a MVA ajustada publicada quando o fornecedor é do Simples", () => {
+    const r = calcular({ valorProdutos: 100_000, aliquotaInterestadual: 7, aliquotaInterna: 20, mva: 33, mvaAjustada: 54.61, fornecedorSimples: true });
+    expect(r.mvaAjustada).toBe(33);
+  });
+
+  it("soma o FUNCEP à alíquota interna no débito, sem mudar o ajuste da MVA", () => {
+    const r = calcular({ valorProdutos: 100_000, aliquotaInterestadual: 12, aliquotaInterna: 25, fcp: 2, mva: 40 });
+    // MVA ajustada = 1,40 × 0,88 ÷ 0,75 − 1 = 64,27%; 1.642,70 × 27% − 120 = 323,53
+    expect(r).toMatchObject({ mvaAjustada: 64.27, baseCalculo: 164_270, icmsDevido: 32_353 });
+  });
+
   it("trata frete e IPI como opcionais", () => {
     const comZero = calcular({ valorProdutos: 50_000, frete: 0, aliquotaIpi: 0, aliquotaInterestadual: 12, aliquotaInterna: 20, mva: 40 });
     const semCampos = calcular({ valorProdutos: 50_000, aliquotaInterestadual: 12, aliquotaInterna: 20, mva: 40 });
