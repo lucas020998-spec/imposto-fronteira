@@ -17,7 +17,7 @@ Abra http://localhost:3000. Todas as páginas pedem a senha de `APP_PASSWORD` (v
 
 ## No Windows, com dois cliques
 
-Com Node.js, pnpm e o `.env.local` prontos, dê dois cliques em `Iniciar Imposto Fronteira.bat`. Na primeira vez (e depois de baixar uma versão nova) ele instala e prepara o app; depois só liga e abre o navegador em http://localhost:3000. Fechar a janela preta desliga o app. Para ter um ícone na área de trabalho: botão direito no arquivo → **Enviar para** → **Área de trabalho (criar atalho)**.
+Com o Node.js instalado e o `.env.local` pronto, dê dois cliques em `Iniciar Imposto Fronteira.bat`. Na primeira vez (e depois de baixar uma versão nova) ele instala e prepara o app; depois só liga e abre o navegador em http://localhost:3000. Sem o pnpm instalado, ele usa o `npx` (vem com o Node.js). Fechar a janela preta desliga o app. Para ter um ícone na área de trabalho: botão direito no arquivo → **Enviar para** → **Área de trabalho (criar atalho)**.
 
 ## Banco de dados
 
