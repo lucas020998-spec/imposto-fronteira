@@ -1,18 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { salvarSimulacao } from "./actions";
 import { inserirSimulacao } from "./repository";
+import { temSessao } from "@/features/acesso/sessao";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn() } }));
 vi.mock("./repository", () => ({ inserirSimulacao: vi.fn() }));
+vi.mock("@/features/acesso/sessao", () => ({ temSessao: vi.fn() }));
 
 const base = {
   ncm: "87089990", ufOrigem: "PE" as const, importado: false, fornecedorSimples: false,
   valorProdutos: 100_000, frete: 5_000, aliquotaIpi: 10, aliquotaInterna: 20, mva: 33,
 };
 
-beforeEach(() => vi.mocked(inserirSimulacao).mockResolvedValue(7));
+beforeEach(() => {
+  vi.mocked(inserirSimulacao).mockResolvedValue(7);
+  vi.mocked(temSessao).mockResolvedValue(true);
+});
 
 describe("salvarSimulacao", () => {
   it("recalcula no servidor e grava entrada, resultado e textos opcionais", async () => {
@@ -27,6 +32,13 @@ describe("salvarSimulacao", () => {
   it("ignora valores de resultado enviados pelo cliente", async () => {
     await salvarSimulacao({ ...base, icmsDevido: 1 } as never);
     expect(vi.mocked(inserirSimulacao).mock.calls[0][0].icmsDevido).toBe(21_049);
+  });
+
+  it("recusa gravar sem sessão válida", async () => {
+    vi.mocked(temSessao).mockResolvedValue(false);
+    const r = await salvarSimulacao(base);
+    expect(r.ok).toBe(false);
+    expect(inserirSimulacao).not.toHaveBeenCalled();
   });
 
   it("rejeita entrada inválida sem gravar", async () => {

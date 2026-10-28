@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { temSessao } from "@/features/acesso/sessao";
 import { logger } from "@/lib/logger";
 import { calcular } from "@/lib/tax/calculate";
 import { aliquotaInterestadual } from "@/lib/tax/rates";
@@ -10,6 +11,7 @@ import { inserirSimulacao } from "./repository";
 export type ResultadoSalvar = { ok: true; id: number } | { ok: false; erro: string };
 
 export async function salvarSimulacao(input: SalvarSimulacaoInput): Promise<ResultadoSalvar> {
+  if (!(await temSessao())) return { ok: false, erro: "Sessão expirada. Entre de novo para salvar." };
   const parsed = salvarSimulacaoSchema.safeParse(input);
   if (!parsed.success) return { ok: false, erro: parsed.error.issues[0]?.message ?? "Dados inválidos" };
 

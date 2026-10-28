@@ -29,6 +29,7 @@ O build não roda lint; use `pnpm lint` ou `pnpm check`.
 - `src/lib/format.test.ts`: leitura de números em pt-BR e formatação.
 - `src/features/historico/actions.test.ts`: recálculo no servidor, resultado do cliente ignorado, textos opcionais, entrada inválida e falha de banco sem vazar detalhes.
 - `src/features/historico/repository.test.ts`: integração com PostgreSQL real (gravação, busca, curingas do LIKE). Só roda com `TEST_DATABASE_URL`; fica como "skipped" no `pnpm check`.
+- `src/lib/auth.test.ts`: senha certa e errada, cookie válido e adulterado, troca de senha invalida sessões, senha ausente bloqueia tudo, redirecionamento só para caminhos internos.
 - `src/lib/env.test.ts`, `logger.test.ts`, `src/db/index.test.ts`: templates do toolkit (validação sem vazar segredos, redação de log, ciclo do pool).
 - O importador foi testado de ponta a ponta com um PDF sintético. **Ainda não foi testado com o PDF oficial do Anexo 05.**
 - Não há testes de DOM nem E2E versionados. O fluxo do simulador foi verificado com Playwright durante o setup (registro em `setup.md`). Adicione testes de interface quando o fluxo crescer.
@@ -45,7 +46,7 @@ Prompt reutilizável: bloco "Prompt" de `docs/prompts/13-security-review.md` do 
 Leia https://raw.githubusercontent.com/lucas020998-spec/vibe-coding-toolkit/790a895304e0c08b70a5b215c9d334f1c86b816c/docs/prompts/13-security-review.md e execute o bloco "Prompt" neste repositório (ou no diff indicado).
 ```
 
-A revisão é somente leitura. Relatórios ficam fora do repositório e privados. Superfície atual: Server Action `salvarSimulacao` e página `/historico` (validadas com Zod, consultas parametrizadas pelo Drizzle), `DATABASE_URL` como único segredo e o arquivo importado pelo script. **Não há autenticação**: publicado sem proteção, qualquer pessoa com o endereço lê e grava o histórico (ver `PRODUCT.md`).
+A revisão é somente leitura. Relatórios ficam fora do repositório e privados. Superfície atual: tela `/entrar` (senha única), proxy de sessão, Server Actions `entrar`, `sair` e `salvarSimulacao`, página `/historico` (validadas com Zod e com nova checagem de sessão; consultas parametrizadas pelo Drizzle), segredos `DATABASE_URL` e `APP_PASSWORD`, e o arquivo importado pelo script. Risco conhecido: senha curta, sem bloqueio por tentativas além da espera de 1 s (ver `PRODUCT.md`).
 
 ## Melhoria do harness
 

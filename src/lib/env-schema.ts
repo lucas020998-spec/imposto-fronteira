@@ -9,6 +9,9 @@ export const databaseUrlSchema = z.string().refine((value) => {
   }
 });
 
+// Senha de acesso ao app; o valor fica só no ambiente, nunca no código.
+export const appPasswordSchema = z.string().min(4);
+
 export const logLevelSchema = z.enum(["trace", "debug", "info", "warn", "error", "fatal", "silent"]).default("info");
 
 export function parseEnv<T>(key: string, value: unknown, schema: z.ZodType<T>): T {

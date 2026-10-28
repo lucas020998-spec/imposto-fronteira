@@ -57,6 +57,8 @@
 | Importador com PDF sintético | Validado | 3 itens extraídos corretamente (CEST, 2 NCMs, MVA 71,78%, item sem MVA) |
 | Importador com PDF oficial | Pendente | Site da SEFAZ-PB bloqueado na sessão |
 | Histórico (2ª etapa) | Validado | PostgreSQL 16 local: `db:generate` → SQL revisado → `db:migrate`. Playwright: simulação de R$ 1.000 de PE com frete e IPI (antecipação 10,4%, R$ 104,00) salva com fornecedor e observação, campos limpos, item no topo de `/historico`, busca "esquadrias" acha 1, busca inexistente mostra estado vazio, 390px sem rolagem, sem erros de console. Linha conferida no banco. Banco local apenas; produção pendente |
+| Senha de acesso (3ª etapa) | Validado | `next start` + curl: `/` e `/historico?q=a` sem cookie → 307 para `/entrar` (com `para`). Playwright: senha errada mostra "Senha incorreta."; senha certa volta a `/historico`; cookie `sessao` httpOnly, SameSite=Lax, sem a senha no valor; simulação salva com sessão (linha conferida no banco); "Sair" volta a `/entrar` e `/historico` fica bloqueado; sem erros de console. POST de Server Action sem cookie → 307 |
+| Envio ao GitHub | Validado | `git push -u origin main` para `lucas020998-spec/imposto-fronteira` |
 | Teste de integração do repositório | Validado | `TEST_DATABASE_URL=… pnpm vitest run src/features`: 5 testes passam |
 | Simulador no navegador (1ª etapa) | Validado | `next start` na porta 3123 + Playwright: R$ 1.000, PE, frete R$ 50, IPI 10%, MVA 33% → 21,05% / R$ 210,49; sem MVA → antecipação 8,4%; busca do NCM 3917.33.00 na base sintética → ST com MVA 71,78% (32,94%); NCM fora → antecipação parcial; 390px sem rolagem horizontal; sem erros de console. Servidor encerrado e base restaurada ao final |
 | Banco de produção | Pendente | Provedor e `DATABASE_URL` a definir pelo usuário |
@@ -69,7 +71,7 @@
 ## Pendências e próxima entrega
 
 1. **Importar o PDF oficial do Anexo 05** e conferir 10 itens de segmentos diferentes (próxima entrega).
-2. Escolher o PostgreSQL de produção e a proteção de acesso do app publicado (sem login, o histórico fica aberto a quem tiver o endereço).
+2. Escolher o PostgreSQL de produção.
 3. Validar com a contabilidade as regras do Simples (IPI na base, MVA sem ajuste para fornecedor do Simples, cálculo "por dentro") e de arredondamento.
 4. Preparar a máquina (prompt 10 do toolkit): Ponytail, Caveman, Superpowers, RTK, Context7, Graphify e agent-browser.
-5. Enviar o código ao GitHub: o repositório `lucas020998-spec/imposto-fronteira` existe, mas o Claude GitHub App não tem permissão de escrita nele.
+5. Definir `APP_PASSWORD` e `DATABASE_URL` na hospedagem ao publicar. Considerar uma senha mais longa.

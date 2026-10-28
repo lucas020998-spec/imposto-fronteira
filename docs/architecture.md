@@ -4,21 +4,27 @@
 
 Next.js 16.4.3 (App Router, Turbopack), React 19.3, TypeScript 5.9 estrito, Tailwind CSS 4.3, Zod 4.6, Drizzle ORM 0.45 + `pg` 8 (PostgreSQL), Pino 10, Vitest 5.0, `unpdf` 1.9 (só no importador), Node 22, pnpm 10.28. Versões exatas no `pnpm-lock.yaml`.
 
-`/` e `/como-calcular` são estáticas; `/historico` é renderizada no servidor a cada acesso.
+`/` e `/como-calcular` são estáticas; `/historico` e `/entrar` são renderizadas no servidor a cada acesso. `src/proxy.ts` (antigo middleware) exige sessão em todas as rotas, exceto `/entrar` e arquivos estáticos.
 
 ## Mapa do código
 
 ```text
 src/
+├── proxy.ts                     # redireciona para /entrar sem sessão válida
 ├── app/
 │   ├── layout.tsx               # cabeçalho, navegação e rodapé
 │   ├── page.tsx                 # página do simulador
+│   ├── entrar/page.tsx          # tela de senha
 │   ├── historico/page.tsx       # últimas 50 simulações com busca (?q=)
 │   └── como-calcular/page.tsx   # explicação com exemplos calculados pelo motor
 ├── components/
 │   ├── simulador.tsx            # formulário (Client Component) e escolha do item do anexo
 │   ├── resultado.tsx            # percentual, valor a recolher e memória de cálculo
-│   └── salvar-simulacao.tsx     # fornecedor, observação e botão de salvar
+│   ├── salvar-simulacao.tsx     # fornecedor, observação e botão de salvar
+│   └── form-entrar.tsx          # formulário de senha (useActionState)
+├── features/acesso/
+│   ├── actions.ts               # Server Actions entrar (senha → cookie) e sair
+│   └── sessao.ts                # temSessao(): checagem perto dos dados
 ├── features/historico/
 │   ├── input.ts                 # validação Zod do que o cliente envia
 │   ├── actions.ts               # Server Action: valida, recalcula e grava
@@ -37,6 +43,7 @@ src/
     ├── format.ts                # leitura e formatação pt-BR
     ├── env.ts, env-schema.ts    # DATABASE_URL e LOG_LEVEL validados (templates do toolkit)
     ├── logger.ts                # Pino com redação de segredos
+    ├── auth.ts                  # token de sessão (HMAC da senha), comparação em tempo constante, destino seguro
     └── utils.ts                 # cn() do toolkit
 drizzle/                         # SQL versionado das migrações
 scripts/
@@ -52,7 +59,8 @@ eslint-rules/                    # regras do toolkit (perfil completo)
 3. `simulador.tsx` busca o NCM digitado por prefixo (`lookup.ts`), monta a `Entrada` e chama `calcular()` a cada mudança. Tudo roda no navegador.
 4. `como-calcular/page.tsx` chama `calcular()` no build com exemplos fixos, então a explicação nunca diverge do motor.
 5. "Salvar simulação" chama a Server Action `salvarSimulacao`, que valida com Zod, recalcula com `calcular()` (o resultado do cliente é ignorado) e grava via `repository.ts`. Erros de banco viram mensagem genérica e log só com o código do erro.
-6. `/historico` lê `?q=`, chama `listarSimulacoes` (ILIKE em NCM, fornecedor, observação e descrição, com curingas escapados, limite de 50) e mostra um aviso se o banco estiver inacessível.
+6. Acesso: `entrar` compara a senha com `APP_PASSWORD` em tempo constante (espera 1 s se errar) e grava o cookie `sessao` (httpOnly, SameSite=Lax, Secure em produção, 30 dias) com um HMAC derivado da senha. O proxy valida o cookie em toda requisição; `salvarSimulacao` e `/historico` validam de novo com `temSessao()`. O redirecionamento pós-login só aceita caminhos internos.
+7. `/historico` lê `?q=`, chama `listarSimulacoes` (ILIKE em NCM, fornecedor, observação e descrição, com curingas escapados, limite de 50) e mostra um aviso se o banco estiver inacessível.
 
 ## Dados
 
@@ -73,7 +81,8 @@ Ciclo: alterar o schema → `pnpm db:generate` → revisar o SQL → `pnpm db:mi
 | Histórico em PostgreSQL + Drizzle | Padrão do toolkit; consultas com busca e ordenação | — |
 | Anexo 05 como JSON versionado, não no banco | Dado público, atualizado poucas vezes por ano; diff revisável no Git | Houver edição da base pela interface |
 | Resultado recalculado no servidor ao salvar | O cliente não é confiável; o histórico fica coerente com o motor | — |
-| Histórico sem login | Uso interno de uma pessoa, pedido sem autenticação | O app for publicado sem proteção de acesso ou houver mais usuários |
+| Senha única em variável de ambiente, sem banco de usuários | Pedido do usuário; uma pessoa usa o app | Houver mais usuários ou necessidade de saber quem salvou |
+| Cookie = HMAC da senha, sem sessão no banco | Sem estado extra; trocar a senha derruba todas as sessões | For preciso encerrar uma sessão específica |
 | Cálculo no cliente | Resposta imediata e sem servidor | Regras precisarem ficar privadas |
 | Centavos inteiros e arredondamento por valor | Evita erro de ponto flutuante | A SEFAZ-PB definir outra regra de arredondamento |
 | MVA ajustada com 2 casas | Prática usual nos exemplos de ST | Divergência com cálculo oficial |

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { sair } from "@/features/acesso/actions";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,6 +22,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/" className="hover:text-accent">Simulador</Link>
               <Link href="/historico" className="hover:text-accent">Histórico</Link>
               <Link href="/como-calcular" className="hover:text-accent">Como é calculado</Link>
+              <form action={sair}>
+                <button className="text-muted hover:text-accent">Sair</button>
+              </form>
             </div>
           </nav>
         </header>

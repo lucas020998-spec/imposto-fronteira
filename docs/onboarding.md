@@ -13,7 +13,7 @@ pnpm install
 pnpm dev
 ```
 
-Abra http://localhost:3000. O simulador funciona sem banco; o histórico precisa do passo abaixo.
+Abra http://localhost:3000. Todas as páginas pedem a senha de `APP_PASSWORD` (veja o passo 2 abaixo); sem ela configurada, nada abre. O simulador funciona sem banco; o histórico precisa do banco.
 
 ## Banco de dados
 
@@ -21,7 +21,7 @@ Abra http://localhost:3000. O simulador funciona sem banco; o histórico precisa
    ```bash
    createuser -P imposto && createdb -O imposto imposto_fronteira
    ```
-2. `cp .env.example .env.local` e preencha `DATABASE_URL=postgresql://imposto:SENHA@localhost:5432/imposto_fronteira`. O `.env.local` é ignorado pelo Git.
+2. `cp .env.example .env.local` e preencha `DATABASE_URL=postgresql://imposto:SENHA@localhost:5432/imposto_fronteira` e `APP_PASSWORD` (a senha de acesso ao app). O `.env.local` é ignorado pelo Git.
 3. `pnpm db:migrate` aplica o SQL de `drizzle/`.
 4. Para mudar a tabela: edite `src/db/schema/index.ts`, rode `pnpm db:generate`, revise o SQL gerado e aplique com `pnpm db:migrate`.
 

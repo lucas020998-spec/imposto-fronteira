@@ -39,7 +39,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `src/lib/anexo5/parse.ts` e `schema.ts` também rodam em Node pelo script de importação; mantenha imports relativos com extensão `.ts` neles.
 - Histórico: o servidor sempre recalcula o resultado antes de gravar; nunca confie em valores calculados no cliente. Acesso ao banco só em `src/features/*/repository.ts`.
 - Migrações: gere com `db:generate`, revise o SQL e aplique só no banco certo. Nunca migre em build, import ou requisição; não use `db:push`.
-- Logs com o `logger` (Pino), sem dados de formulário nem `DATABASE_URL`.
+- Logs com o `logger` (Pino), sem dados de formulário, senha nem `DATABASE_URL`.
+- Acesso: senha única em `APP_PASSWORD` (nunca no código ou nos docs). `src/proxy.ts` protege as rotas; toda Server Action ou página que lê/grava dados também chama `temSessao()`.
 - Textos da interface e da documentação em português do Brasil.
 
 ## Acordos de trabalho

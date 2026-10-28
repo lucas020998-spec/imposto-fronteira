@@ -8,7 +8,7 @@ Requer Node.js 22+, pnpm 10 e PostgreSQL (para o histórico).
 
 ```bash
 pnpm install
-cp .env.example .env.local   # preencha DATABASE_URL
+cp .env.example .env.local   # preencha DATABASE_URL e APP_PASSWORD (senha de acesso)
 pnpm db:migrate              # cria a tabela do histórico
 pnpm dev                     # http://localhost:3000
 pnpm check                   # lint, tipos, testes e build (não precisa de banco)

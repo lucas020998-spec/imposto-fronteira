@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { temSessao } from "@/features/acesso/sessao";
 import { buscaSchema } from "@/features/historico/input";
 import { listarSimulacoes } from "@/features/historico/repository";
 import { formatarMoeda, formatarPct } from "@/lib/format";
@@ -18,6 +20,7 @@ async function carregar(busca: string) {
 }
 
 export default async function Historico({ searchParams }: PageProps<"/historico">) {
+  if (!(await temSessao())) redirect("/entrar?para=/historico");
   const busca = buscaSchema.parse((await searchParams).q);
   const linhas = await carregar(busca);
 

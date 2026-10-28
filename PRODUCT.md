@@ -8,10 +8,11 @@ Objetivo: antes de fechar a compra, saber em segundos o percentual de ICMS que a
 
 ## Público
 
-Gerente de compras da empresa. Uso interno, sem login, em desktop e celular, em português.
+Gerente de compras da empresa. Uso interno, protegido por uma senha única de acesso, em desktop e celular, em português.
 
 ## Fluxos
 
+0. **Entrar:** qualquer página pede a senha de acesso; a sessão dura 30 dias ou até clicar em "Sair".
 1. **Simular uma compra:** informa NCM, estado do fornecedor e valor dos produtos e, se quiser, frete, IPI e se o fornecedor é do Simples. Recebe o percentual sobre os produtos, o valor a recolher e a memória de cálculo.
 2. **Consultar o Anexo 05:** ao digitar o NCM, vê os itens do anexo que o cobrem (CEST, descrição, MVA) e escolhe o correto quando há mais de um.
 3. **Salvar no histórico:** com a simulação na tela, informa fornecedor e observação (ambos opcionais) e salva.
@@ -21,7 +22,7 @@ Gerente de compras da empresa. Uso interno, sem login, em desktop e celular, em 
 
 ## Fora do escopo
 
-Login e permissões, edição ou exclusão de simulações, cálculo por nota fiscal com vários itens, regime normal (débito e crédito), benefícios fiscais, FCP, produtos com preço de pauta/PMC, compras de matéria-prima para industrialização ou de uso e consumo, e emissão de guia (DAR).
+Usuários individuais e permissões, edição ou exclusão de simulações, cálculo por nota fiscal com vários itens, regime normal (débito e crédito), benefícios fiscais, FCP, produtos com preço de pauta/PMC, compras de matéria-prima para industrialização ou de uso e consumo, e emissão de guia (DAR).
 
 ## Regras de cálculo (Simples Nacional)
 
@@ -37,6 +38,7 @@ Login e permissões, edição ou exclusão de simulações, cálculo por nota fi
 - O histórico guarda a entrada e o resultado do momento em que foi salvo; o servidor recalcula o resultado antes de gravar.
 - Fornecedor até 120 caracteres e observação até 1.000, ambos opcionais.
 - Interface acessível em pt-BR, funcional a partir de 360px de largura.
+- Acesso: senha única definida em `APP_PASSWORD` no servidor (nunca no código). Sem a variável, todas as páginas ficam bloqueadas. Trocar a senha encerra todas as sessões.
 
 ## Restrições e decisões técnicas
 
@@ -51,7 +53,7 @@ Login e permissões, edição ou exclusão de simulações, cálculo por nota fi
 |---|---|---|---|
 | **PDF oficial do Anexo 05 não importado** | Pendência essencial | Sem ele, a busca por NCM não encontra nada e o app só calcula com MVA manual ou antecipação parcial | O envio pelo chat falhou; enviar pelo GitHub e rodar `pnpm anexo5:import` |
 | **Banco de dados de produção** | Decisão externa | O histórico só funciona com um PostgreSQL acessível pelo app publicado | Escolher o provedor (ex.: Neon ou Supabase) e configurar `DATABASE_URL` |
-| **Acesso ao histórico** | Decisão externa | Sem login, quem tiver o endereço do app vê e grava simulações | Publicar com proteção de acesso (ex.: senha da hospedagem) ou pedir login |
+| **Força da senha** | Risco aceito | A senha pedida tem 4 dígitos (10 mil combinações). Há 1 s de espera por erro, mas várias tentativas em paralelo ainda podem descobri-la | Usar uma senha mais longa em `APP_PASSWORD` ou adicionar bloqueio por tentativas |
 | Regras do Simples na PB | Premissa reversível | IPI na base da antecipação, MVA sem ajuste para fornecedor do Simples e crédito pela alíquota interestadual vieram da LC 123, do Conv. 142/2018 e de fontes secundárias; o RICMS-PB não foi consultado (site bloqueado) | Validar com a contabilidade |
 | Base "por dentro" | Premissa | Fontes secundárias indicam que, desde 2021, a PB calcula a antecipação do regime normal "por dentro" (art. 106). Não foi confirmado se vale para o Simples | Validar com a contabilidade |
 | Industrialização e uso/consumo | Fora da v1 | A empresa é metalúrgica; compras de insumos ou de uso e consumo podem ter outra regra | Definir com a contabilidade |
@@ -64,6 +66,7 @@ Login e permissões, edição ou exclusão de simulações, cálculo por nota fi
 - Frete e IPI só entram no cálculo quando marcados.
 - R$ 1.000 de PE, frete R$ 50, IPI 10%, sem MVA: 10,4% e R$ 104,00.
 - Uma simulação salva aparece no topo do histórico com fornecedor e observação, e a busca por um trecho da observação a encontra.
+- Sem a senha, qualquer página redireciona para "Entrar"; com a senha certa, volta à página pedida.
 - A tela não tem rolagem horizontal em 390px.
 
 ## Próxima entrega
