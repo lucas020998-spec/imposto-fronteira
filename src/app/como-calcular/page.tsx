@@ -4,11 +4,12 @@ import { calcular } from "@/lib/tax/calculate";
 
 export const metadata: Metadata = { title: "Como é calculado · Imposto Fronteira PB" };
 
-// Exemplos fixos, calculados pelo mesmo código do simulador.
+// Exemplos fixos, calculados pelo mesmo código do simulador. O de antecipação é uma nota real do
+// DAR de 08/2026 (compra de Pernambuco com IPI e frete em CT-e); a SEFAZ cobrou o mesmo valor.
+const ap = { valorProdutos: 289_544, valorIpi: 9_410, frete: 28_000, aliquotaFrete: 12, aliquotaInterestadual: 12, aliquotaInterna: 20 };
+const rAp = calcular(ap);
 const st = { valorProdutos: 100_000, frete: 5_000, aliquotaIpi: 10, aliquotaInterestadual: 12, aliquotaInterna: 20, mva: 33 };
 const rSt = calcular(st);
-const ap = { valorProdutos: 100_000, aliquotaIpi: 5, aliquotaInterestadual: 7, aliquotaInterna: 20 };
-const rAp = calcular(ap);
 const somaSt = st.valorProdutos + st.frete + rSt.valorIpi;
 
 export default function ComoCalcular() {
@@ -17,12 +18,12 @@ export default function ComoCalcular() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Como o imposto de fronteira é calculado</h1>
         <p className="mt-2 text-muted">
-          Quando você compra de outro estado para revender na Paraíba, o fornecedor cobra o ICMS com a alíquota
-          interestadual. A Paraíba cobra a diferença até a sua alíquota interna. Essa diferença é o imposto de fronteira.
+          Quando você compra de outro estado, o fornecedor cobra o ICMS com a alíquota interestadual. A Paraíba cobra a
+          diferença até a sua alíquota interna. Essa diferença é o imposto de fronteira.
         </p>
         <p className="mt-2 text-muted">
           Este simulador segue as regras para empresas do <strong className="text-foreground">Simples Nacional</strong>: o
-          ICMS de fronteira é pago à parte, fora do DAS (LC 123/2006, art. 13, § 1º, XIII).
+          ICMS de fronteira é pago à parte, fora do DAS, no DAR “ICMS-Simples Nacional-Fronteira” (receita 1124).
         </p>
       </header>
 
@@ -31,24 +32,53 @@ export default function ComoCalcular() {
         <ul className="list-disc space-y-1 pl-5">
           <li><strong>Interna da PB:</strong> 20% na regra geral.</li>
           <li><strong>Interestadual:</strong> 7% se o fornecedor está em SP, RJ, MG, PR, SC ou RS; 12% nos demais estados.</li>
-          <li><strong>Importados:</strong> 4%, qualquer que seja o estado.</li>
+          <li><strong>Importados:</strong> 4%, qualquer que seja o estado. O frete em CT-e continua com 7% ou 12%.</li>
         </ul>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">2. O NCM decide o tipo de cálculo</h2>
+        <h2 className="text-lg font-semibold">2. Qual cálculo vale</h2>
         <p>
-          Se o NCM do produto está no <strong>Anexo 05</strong> do RICMS-PB, a mercadoria está na <strong>substituição
-          tributária</strong> e o cálculo usa a MVA (margem de valor agregado). Se não está, aplica-se a
-          <strong> antecipação parcial</strong>, sem MVA.
+          Para <strong>industrialização ou uso</strong>, a SEFAZ cobra a <strong>antecipação</strong> (exemplo A), mesmo
+          quando o NCM está no Anexo 05. Foi assim em todas as notas do DAR de 08/2026. Só na <strong>revenda</strong> de
+          item do Anexo 05 vale a <strong>substituição tributária</strong>, com MVA (exemplo B).
         </p>
       </section>
 
       <section className="space-y-3 rounded-xl border border-line bg-card p-5">
-        <h2 className="text-lg font-semibold">Exemplo A: produto do Anexo 05 (substituição tributária)</h2>
+        <h2 className="text-lg font-semibold">Exemplo A: antecipação (nota real de 08/2026)</h2>
         <p className="text-sm text-muted">
-          Compra de {R(st.valorProdutos)} de um fornecedor de Pernambuco (12%), com frete de {R(st.frete)}, IPI de{" "}
-          {P(st.aliquotaIpi)} e MVA original de {P(st.mva)}.
+          Compra de {R(ap.valorProdutos)} de Pernambuco (12%), com IPI de {R(ap.valorIpi)} e frete de {R(ap.frete)} em CT-e.
+        </p>
+        <ol className="list-decimal space-y-2 pl-5 tabular-nums">
+          <li>
+            <strong>Some</strong> produtos + IPI + frete = {R(ap.valorProdutos + ap.valorIpi + ap.frete)}
+          </li>
+          <li>
+            <strong>Desconte o ICMS já pago</strong>: da nota ({R(rAp.creditoNota ?? 0)}, 12%) e do CT-e ({R(rAp.creditoFrete ?? 0)}, 12%)
+            = <strong>{R(rAp.valorLiquido ?? 0)}</strong>
+            <br />
+            <span className="text-sm text-muted">Fornecedor do Simples não destaca ICMS na nota: não há o que descontar.</span>
+          </li>
+          <li>
+            <strong>Base “por dentro”</strong> = valor líquido ÷ (1 − 20%) = {R(rAp.valorLiquido ?? 0)} ÷ 0,8 ={" "}
+            <strong>{R(rAp.baseCalculo)}</strong>
+          </li>
+          <li>
+            <strong>Diferença de alíquotas</strong> = 20% − 12% = {P(rAp.diferencaAliquotas ?? 0)} da base
+          </li>
+          <li>
+            <strong>A recolher:</strong> {R(rAp.icmsDevido)}, ou seja, <strong>{P(rAp.percentualEfetivo)}</strong> do valor dos produtos.
+            É o mesmo valor que a SEFAZ cobrou por essa nota.
+          </li>
+        </ol>
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-line bg-card p-5">
+        <h2 className="text-lg font-semibold">Exemplo B: revenda de item do Anexo 05 (substituição tributária)</h2>
+        <p className="text-sm text-muted">
+          Compra de {R(st.valorProdutos)} de Pernambuco (12%), com frete de {R(st.frete)}, IPI de {P(st.aliquotaIpi)} e MVA
+          original de {P(st.mva)}.
         </p>
         <ol className="list-decimal space-y-2 pl-5 tabular-nums">
           <li>
@@ -77,37 +107,17 @@ export default function ComoCalcular() {
             <strong>A recolher:</strong> {R(rSt.icmsDevido)}, ou seja, <strong>{P(rSt.percentualEfetivo)}</strong> do valor dos produtos.
           </li>
         </ol>
-      </section>
-
-      <section className="space-y-3 rounded-xl border border-line bg-card p-5">
-        <h2 className="text-lg font-semibold">Exemplo B: produto fora do Anexo 05 (antecipação parcial)</h2>
         <p className="text-sm text-muted">
-          Compra de {R(ap.valorProdutos)} de um fornecedor de São Paulo (7%), com IPI de {P(ap.aliquotaIpi)}. No Simples não
-          se soma MVA: cobra-se só a diferença de alíquotas.
-        </p>
-        <ol className="list-decimal space-y-2 pl-5 tabular-nums">
-          <li>Base = produtos + IPI = {R(rAp.baseCalculo)}</li>
-          <li>Imposto da PB = {R(rAp.baseCalculo)} × 20% = {R(rAp.icmsDevido + rAp.icmsProprio)}</li>
-          <li>ICMS do fornecedor = {R(ap.valorProdutos)} × 7% = {R(rAp.icmsProprio)} (o IPI não tem ICMS destacado)</li>
-          <li>
-            <strong>A recolher:</strong> {R(rAp.icmsDevido)}, ou seja, <strong>{P(rAp.percentualEfetivo)}</strong> do valor dos produtos.
-          </li>
-        </ol>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Frete e IPI são opcionais</h2>
-        <p>
-          O frete da nota entra em todas as bases. O IPI entra na base do imposto da PB, mas não no ICMS do fornecedor.
-          Se você não informar, o simulador considera zero, e o resultado tende a ficar um pouco menor do que o real.
+          Se o fornecedor é do Simples, usa-se a MVA original, sem o ajuste do passo 1.
         </p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">E se o fornecedor também for do Simples?</h2>
+        <h2 className="text-lg font-semibold">Frete e IPI</h2>
         <p>
-          Na substituição tributária, quando o fornecedor é optante do Simples, usa-se a MVA original do Anexo 05, sem o
-          ajuste do passo 1 do exemplo A. Marque a opção no simulador. Na antecipação parcial nada muda.
+          Informe os valores como estão na nota. O frete pode vir na própria nota ou em CT-e separado: marque a opção certa,
+          porque o ICMS de cada um é descontado de um jeito. Se você não informar, o simulador considera zero, e o resultado
+          fica menor do que o cobrado.
         </p>
       </section>
 
@@ -115,9 +125,9 @@ export default function ComoCalcular() {
         <h2 className="text-base font-semibold text-foreground">Limites da simulação</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Não trata benefícios fiscais nem regimes especiais. Itens com pauta, PMPF ou valor AD REM pedem a MVA manual.</li>
-          <li>Frete pago à parte (FOB, com CT-e próprio) não entra na base.</li>
-          <li>Não trata compras de matéria-prima para industrialização nem de uso e consumo, que podem ter regras próprias.</li>
-          <li>A MVA ajustada é arredondada em duas casas decimais.</li>
+          <li>Nota com itens de alíquotas diferentes (ex.: 4% e 7%): simule cada grupo à parte, com o frete rateado pelo valor.</li>
+          <li>O ICMS da nota é recalculado pelo total; a nota pode diferir alguns centavos por arredondar item a item.</li>
+          <li>A fórmula da ST (revenda) ainda não foi conferida com um DAR de substituição tributária.</li>
         </ul>
       </section>
     </article>

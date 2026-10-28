@@ -7,7 +7,7 @@ const item: ItemAnexo5 = {
   descricao: "Tubos", variante: null, mva: 33, mvaAjustada: { 4: 59.6, 7: 54.61, 12: 46.3 },
   mvaTexto: null, aliquota: 20, fcp: 0, aliquotaTexto: "20%",
 };
-const dados: DadosSimulacao = { ufOrigem: "SP", importado: false, fornecedorSimples: false, valorProdutos: 100_000 };
+const dados: DadosSimulacao = { ufOrigem: "SP", importado: false, fornecedorSimples: false, valorProdutos: 100_000, revenda: true };
 
 describe("montarEntrada", () => {
   it("usa a MVA ajustada publicada para a alíquota interestadual da origem", () => {
@@ -28,14 +28,24 @@ describe("montarEntrada", () => {
     expect(r.ok && r.entrada.mvaAjustada).toBeUndefined();
   });
 
-  it("sem item é antecipação parcial", () => {
+  it("sem item, ou sem ser revenda, é antecipação (mantendo alíquota e FUNCEP do item)", () => {
     const r = montarEntrada(dados);
     expect(r.ok && r.entrada.mva).toBeUndefined();
+    const insumo = montarEntrada({ ...dados, revenda: false }, { ...item, aliquota: 25, fcp: 2 });
+    expect(insumo).toMatchObject({ ok: true, entrada: { aliquotaInterna: 25, fcp: 2 } });
+    expect(insumo.ok && insumo.entrada.mva).toBeUndefined();
+  });
+
+  it("frete em CT-e credita pela UF de origem, mesmo com mercadoria importada", () => {
+    expect(montarEntrada({ ...dados, importado: true, frete: 1_000 })).toMatchObject({
+      entrada: { aliquotaInterestadual: 4, aliquotaFrete: 7 },
+    });
   });
 
   it("recusa item sem MVA percentual, a menos que a MVA seja digitada", () => {
     const pauta = { ...item, mva: null, mvaAjustada: null, mvaTexto: "AD REM" };
     expect(montarEntrada(dados, pauta)).toEqual({ ok: false, motivo: expect.stringContaining("AD REM") });
+    expect(montarEntrada({ ...dados, revenda: false }, pauta).ok).toBe(true);
     expect(montarEntrada({ ...dados, mvaManual: 30 }, pauta).ok).toBe(true);
   });
 });

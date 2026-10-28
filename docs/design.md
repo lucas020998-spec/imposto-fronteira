@@ -16,6 +16,9 @@ Ferramenta de trabalho para o gerente de compras: sóbria, direta, em pt-BR. O n
 - O resultado tem `aria-live="polite"` e é recalculado a cada digitação, sem botão.
 - Frete e IPI ficam atrás de caixas de seleção: o campo só aparece quando marcado.
 - Itens do anexo com o mesmo NCM aparecem como botões de opção, com CEST, variante, MVA original e ajustada para a origem escolhida, alíquota especial e descrição.
+- "Compra para revenda" fica desmarcada por padrão; o texto do NCM avisa quando o item está no Anexo 05 mas o cálculo é de antecipação.
+- Frete tem a opção "cobrado na própria nota"; IPI vem em R$ por padrão, com opção de percentual.
+- O resultado da antecipação mostra os créditos da nota e do CT-e, o valor líquido, a base "por dentro" e a diferença de alíquotas, na mesma ordem do extrato da SEFAZ.
 - Item sem MVA percentual mostra o motivo no lugar do resultado e pede a MVA manual.
 - A alíquota interna fica vazia por padrão; o texto de exemplo mostra o valor automático (do anexo ou geral).
 - Mensagens de estado do NCM ficam abaixo do campo e ligadas por `aria-describedby`.

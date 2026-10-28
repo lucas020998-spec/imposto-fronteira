@@ -38,18 +38,38 @@ describe("calcular", () => {
     expect(r.percentualEfetivo).toBe(21.05);
   });
 
-  it("calcula a antecipação parcial sem MVA", () => {
+  it("calcula a antecipação com base por dentro e diferença de alíquotas", () => {
     const r = calcular({ valorProdutos: 100_000, aliquotaInterestadual: 7, aliquotaInterna: 20 });
-    expect(r).toMatchObject({ regime: "antecipacao", baseCalculo: 100_000, icmsProprio: 7_000, icmsDevido: 13_000 });
-    expect(r.percentualEfetivo).toBe(13);
+    // (1.000 − 70) ÷ 0,80 = 1.162,50; × 13% = 151,13
+    expect(r).toMatchObject({
+      regime: "antecipacao", creditoNota: 7_000, creditoFrete: 0, valorLiquido: 93_000,
+      baseCalculo: 116_250, diferencaAliquotas: 13, icmsDevido: 15_113,
+    });
     expect(r.mvaAjustada).toBeUndefined();
   });
 
-  it("inclui o IPI na base da antecipação parcial do Simples, sem creditá-lo", () => {
-    const r = calcular({ valorProdutos: 100_000, frete: 5_000, aliquotaIpi: 10, aliquotaInterestadual: 12, aliquotaInterna: 20 });
-    // (1.000 + 50 + 100) × 20% − (1.000 + 50) × 12% = 230 − 126 = 104
-    expect(r).toMatchObject({ regime: "antecipacao", baseCalculo: 115_000, icmsProprio: 12_600, icmsDevido: 10_400 });
-    expect(r.percentualEfetivo).toBe(10.4);
+  it("na antecipação, soma IPI e frete e abate o ICMS da nota e do CT-e", () => {
+    const r = calcular({
+      valorProdutos: 100_000, valorIpi: 5_000, frete: 10_000, aliquotaFrete: 12,
+      aliquotaInterestadual: 12, aliquotaInterna: 20,
+    });
+    // (1.000 + 50 + 100 − 120 − 12) ÷ 0,80 = 1.272,50; × 8% = 101,80
+    expect(r).toMatchObject({ creditoNota: 12_000, creditoFrete: 1_200, baseCalculo: 127_250, icmsDevido: 10_180 });
+  });
+
+  it("frete na própria nota entra no ICMS destacado, pela alíquota da nota", () => {
+    const r = calcular({ valorProdutos: 100_000, frete: 10_000, freteNaNota: true, aliquotaFrete: 7, aliquotaInterestadual: 4, aliquotaInterna: 20 });
+    expect(r).toMatchObject({ creditoNota: 4_400, creditoFrete: 0 });
+  });
+
+  it("fornecedor do Simples não destaca ICMS: sem crédito da nota, mas o CT-e continua creditando", () => {
+    const r = calcular({ valorProdutos: 100_000, frete: 10_000, aliquotaFrete: 7, fornecedorSimples: true, aliquotaInterestadual: 7, aliquotaInterna: 20 });
+    // (1.000 + 100 − 7) ÷ 0,80 = 1.366,25; × 13% = 177,61
+    expect(r).toMatchObject({ creditoNota: 0, creditoFrete: 700, baseCalculo: 136_625, icmsDevido: 17_761 });
+  });
+
+  it("valor do IPI informado tem prioridade sobre a alíquota", () => {
+    expect(calcular({ valorProdutos: 100_000, valorIpi: 1_234, aliquotaIpi: 10, aliquotaInterestadual: 7, aliquotaInterna: 20 }).valorIpi).toBe(1_234);
   });
 
   it("usa a MVA original quando o fornecedor é do Simples", () => {

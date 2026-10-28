@@ -14,9 +14,13 @@ export const simulacoes = pgTable(
     ufOrigem: varchar("uf_origem", { length: 2 }).notNull(),
     importado: boolean("importado").notNull(),
     fornecedorSimples: boolean("fornecedor_simples").notNull(),
+    /** Compra para revenda (ST para item do Anexo 05); falso = industrialização ou uso (antecipação). */
+    revenda: boolean("revenda").notNull().default(false),
     valorProdutos: bigint("valor_produtos", { mode: "number" }).notNull(),
     frete: bigint("frete", { mode: "number" }),
+    freteNaNota: boolean("frete_na_nota"),
     aliquotaIpi: numeric("aliquota_ipi", { precision: 5, scale: 2, mode: "number" }),
+    valorIpi: bigint("valor_ipi", { mode: "number" }),
     aliquotaInterestadual: numeric("aliquota_interestadual", { precision: 5, scale: 2, mode: "number" }).notNull(),
     aliquotaInterna: numeric("aliquota_interna", { precision: 5, scale: 2, mode: "number" }).notNull(),
     fcp: numeric("fcp", { precision: 5, scale: 2, mode: "number" }),

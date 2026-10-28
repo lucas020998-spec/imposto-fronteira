@@ -15,6 +15,13 @@
       "when": 1793189913342,
       "tag": "0001_variante_fcp_mva_aplicada",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793206228732,
+      "tag": "0002_revenda_frete_ipi",
+      "breakpoints": true
     }
   ]
 }

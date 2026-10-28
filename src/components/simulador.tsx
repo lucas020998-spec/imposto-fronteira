@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { Resultado } from "@/components/resultado";
 import { SalvarSimulacao } from "@/components/salvar-simulacao";
 import { anexo5 } from "@/lib/anexo5/dados";
@@ -19,11 +19,14 @@ export function Simulador() {
   const [uf, setUf] = useState<UfOrigem>("SP");
   const [importado, setImportado] = useState(false);
   const [fornecedorSimples, setFornecedorSimples] = useState(false);
+  const [revenda, setRevenda] = useState(false);
   const [valor, setValor] = useState("");
   const [usarFrete, setUsarFrete] = useState(false);
   const [frete, setFrete] = useState("");
+  const [freteNaNota, setFreteNaNota] = useState(false);
   const [usarIpi, setUsarIpi] = useState(false);
   const [ipi, setIpi] = useState("");
+  const [ipiEmReais, setIpiEmReais] = useState(true);
   const [interna, setInterna] = useState("");
   const [escolha, setEscolha] = useState(0);
   const [mvaManual, setMvaManual] = useState("");
@@ -40,8 +43,11 @@ export function Simulador() {
         importado,
         fornecedorSimples,
         valorProdutos,
+        revenda,
         frete: usarFrete ? lerCentavos(frete) : undefined,
-        aliquotaIpi: usarIpi ? lerNumero(ipi) : undefined,
+        freteNaNota: usarFrete ? freteNaNota : undefined,
+        aliquotaIpi: usarIpi && !ipiEmReais ? lerNumero(ipi) : undefined,
+        valorIpi: usarIpi && ipiEmReais ? lerCentavos(ipi) : undefined,
         aliquotaInterna: lerNumero(interna),
         mvaManual: lerNumero(mvaManual),
       }
@@ -61,7 +67,7 @@ export function Simulador() {
             <input className={campo} inputMode="numeric" placeholder="Ex.: 8708.99.90" value={ncm}
               onChange={(e) => { setNcm(e.target.value); setEscolha(0); }} aria-describedby={`${id}-ncm`} />
           </label>
-          <StatusNcm id={`${id}-ncm`} baseVazia={baseVazia} ncm={ncm} quantidade={correspondencias.length} />
+          <StatusNcm id={`${id}-ncm`} baseVazia={baseVazia} ncm={ncm} quantidade={correspondencias.length} revenda={revenda} />
           {correspondencias.length > 0 && (
             <ul className="space-y-2" aria-label="Itens do Anexo 05 para este NCM">
               {correspondencias.map(({ item, prefixo }, i) => (
@@ -100,7 +106,17 @@ export function Simulador() {
           </label>
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
             <input type="checkbox" checked={fornecedorSimples} onChange={(e) => setFornecedorSimples(e.target.checked)} className="accent-accent" />
-            Fornecedor optante do Simples Nacional (na ST, usa a MVA sem ajuste)
+            Fornecedor optante do Simples Nacional (não destaca ICMS na nota)
+          </label>
+          <label className="flex items-start gap-2 text-sm sm:col-span-2">
+            <input type="checkbox" checked={revenda} onChange={(e) => setRevenda(e.target.checked)} className="mt-1 accent-accent" />
+            <span>
+              Compra para revenda
+              <span className="block text-xs text-muted">
+                Só na revenda o item do Anexo 05 paga substituição tributária (com MVA). Para industrialização ou uso, a SEFAZ
+                cobra antecipação, como nas notas pagas em 08/2026.
+              </span>
+            </span>
           </label>
           <p className="text-sm text-muted sm:col-span-2">
             Alíquota interestadual: <strong className="text-foreground">{formatarPct(inter)}</strong>
@@ -109,8 +125,18 @@ export function Simulador() {
 
         <fieldset className="grid gap-4 rounded-xl border border-line p-5 sm:grid-cols-2">
           <legend className="px-1 text-sm font-medium">Opcionais</legend>
-          <Opcional rotulo="Informar frete (R$)" ativo={usarFrete} onAtivo={setUsarFrete} valor={frete} onValor={setFrete} placeholder="0,00" />
-          <Opcional rotulo="Informar IPI (%)" ativo={usarIpi} onAtivo={setUsarIpi} valor={ipi} onValor={setIpi} placeholder="Ex.: 10" />
+          <Opcional rotulo="Informar frete (R$)" ativo={usarFrete} onAtivo={setUsarFrete} valor={frete} onValor={setFrete} placeholder="0,00">
+            <label className="mt-2 flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={freteNaNota} onChange={(e) => setFreteNaNota(e.target.checked)} className="accent-accent" />
+              Frete cobrado na própria nota (sem CT-e separado)
+            </label>
+          </Opcional>
+          <Opcional rotulo={`Informar IPI (${ipiEmReais ? "R$" : "%"})`} ativo={usarIpi} onAtivo={setUsarIpi} valor={ipi} onValor={setIpi} placeholder={ipiEmReais ? "0,00" : "Ex.: 10"}>
+            <label className="mt-2 flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={!ipiEmReais} onChange={(e) => setIpiEmReais(!e.target.checked)} className="accent-accent" />
+              Informar em percentual em vez de valor
+            </label>
+          </Opcional>
           <label className="block text-sm sm:col-span-2">
             Alíquota interna da PB (%)
             <input className={campo} inputMode="decimal" placeholder={`${aliquotaInternaPadrao(selecionado)} (${selecionado?.aliquota != null ? "do anexo" : "geral"})`}
@@ -137,11 +163,16 @@ export function Simulador() {
   );
 }
 
-function StatusNcm({ id, baseVazia, ncm, quantidade }: { id: string; baseVazia: boolean; ncm: string; quantidade: number }) {
+interface StatusNcmProps { id: string; baseVazia: boolean; ncm: string; quantidade: number; revenda: boolean }
+
+function StatusNcm({ id, baseVazia, ncm, quantidade, revenda }: StatusNcmProps) {
   let texto = "Digite ao menos 4 dígitos.";
-  if (baseVazia) texto = "A base do Anexo 05 ainda não foi importada. Informe a MVA manualmente ou calcule a antecipação parcial.";
-  else if (ncm.replace(/\D/g, "").length >= 4)
-    texto = quantidade ? "NCM encontrado no Anexo 05: o cálculo usa substituição tributária." : "NCM fora do Anexo 05: o cálculo usa antecipação parcial.";
+  if (baseVazia) texto = "A base do Anexo 05 ainda não foi importada. Informe a MVA manualmente ou calcule a antecipação.";
+  else if (ncm.replace(/\D/g, "").length >= 4) {
+    if (!quantidade) texto = "NCM fora do Anexo 05: o cálculo usa antecipação.";
+    else if (revenda) texto = "NCM no Anexo 05 e compra para revenda: o cálculo usa substituição tributária.";
+    else texto = "NCM no Anexo 05, mas sem revenda: o cálculo usa antecipação. Marque “Compra para revenda” para calcular a ST.";
+  }
   return <p id={id} className="text-sm text-muted">{texto}</p>;
 }
 
@@ -167,9 +198,10 @@ interface OpcionalProps {
   valor: string;
   onValor: (v: string) => void;
   placeholder: string;
+  children?: ReactNode;
 }
 
-function Opcional({ rotulo, ativo, onAtivo, valor, onValor, placeholder }: OpcionalProps) {
+function Opcional({ rotulo, ativo, onAtivo, valor, onValor, placeholder, children }: OpcionalProps) {
   return (
     <div className="text-sm">
       <label className="flex items-center gap-2">
@@ -177,7 +209,10 @@ function Opcional({ rotulo, ativo, onAtivo, valor, onValor, placeholder }: Opcio
         {rotulo}
       </label>
       {ativo && (
-        <input aria-label={rotulo} className={campo} inputMode="decimal" placeholder={placeholder} value={valor} onChange={(e) => onValor(e.target.value)} />
+        <>
+          <input aria-label={rotulo} className={campo} inputMode="decimal" placeholder={placeholder} value={valor} onChange={(e) => onValor(e.target.value)} />
+          {children}
+        </>
       )}
     </div>
   );

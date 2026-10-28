@@ -10,7 +10,16 @@ export interface DadosSimulacao {
   fornecedorSimples: boolean;
   valorProdutos: number;
   frete?: number;
+  /** Frete cobrado na própria nota (CIF); sem isso, veio em CT-e separado. */
+  freteNaNota?: boolean;
   aliquotaIpi?: number;
+  /** IPI em centavos, como na nota; tem prioridade sobre a alíquota. */
+  valorIpi?: number;
+  /**
+   * Compra para revenda: item do Anexo 05 entra na substituição tributária. Sem isso
+   * (industrialização ou uso), a SEFAZ-PB cobra antecipação, como nas notas do DAR de 08/2026.
+   */
+  revenda?: boolean;
   /** Alíquota interna digitada; sem ela, vale a do item do anexo ou a geral de 20%. */
   aliquotaInterna?: number;
   /** MVA original digitada, que substitui a do anexo. */
@@ -31,11 +40,15 @@ export function montarEntrada(d: DadosSimulacao, item?: ItemAnexo5): EntradaMont
     aliquotaInterna: d.aliquotaInterna ?? aliquotaInternaPadrao(item),
     fcp: item?.fcp || undefined,
     frete: d.frete,
+    freteNaNota: d.freteNaNota,
+    // CT-e: alíquota pela UF de origem, mesmo quando a mercadoria é importada (4%).
+    aliquotaFrete: aliquotaInterestadual(d.ufOrigem, false),
     aliquotaIpi: d.aliquotaIpi,
+    valorIpi: d.valorIpi,
     fornecedorSimples: d.fornecedorSimples,
   };
   if (d.mvaManual !== undefined) return { ok: true, entrada: { ...base, mva: d.mvaManual } };
-  if (!item) return { ok: true, entrada: base };
+  if (!item || !d.revenda) return { ok: true, entrada: base };
 
   const publicada = item.mvaAjustada?.[inter as 4 | 7 | 12];
   const mva = item.mva ?? publicada;

@@ -33,7 +33,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Regras do projeto
 
-- O cálculo fiscal vive só em `src/lib/tax/`. Toda mudança de regra vem com teste em `calculate.test.ts` e atualização de `PRODUCT.md` e da página `src/app/como-calcular`.
+- O cálculo fiscal vive só em `src/lib/tax/`. Toda mudança de regra vem com teste em `calculate.test.ts` e atualização de `PRODUCT.md` e da página `src/app/como-calcular`. `notas-reais.test.ts` reproduz um DAR pago: não altere os valores esperados sem um novo documento da SEFAZ.
 - Dinheiro em centavos inteiros; alíquotas e MVA em percentual. Não use ponto flutuante para somar valores em reais.
 - `src/data/anexo5.json` é gerado pelo importador a partir do PDF em `fontes/`. Não edite à mão nem invente NCM/MVA: dados fiscais vêm do PDF oficial da SEFAZ-PB. Ao reimportar, confira uma amostra e os avisos do comando.
 - `montarEntrada()` (`src/lib/simulacao.ts`) é a única ponte entre formulário, anexo e cálculo; cliente e servidor usam a mesma.

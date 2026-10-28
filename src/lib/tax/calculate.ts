@@ -8,17 +8,26 @@ export interface Entrada {
   valorProdutos: number;
   aliquotaInterestadual: number;
   aliquotaInterna: number;
-  /** Frete cobrado na nota; opcional. */
+  /** Frete da compra; opcional. */
   frete?: number;
+  /** Frete cobrado na própria nota (CIF). Sem isso, o frete veio em CT-e separado. */
+  freteNaNota?: boolean;
+  /** Alíquota do ICMS do CT-e (7% ou 12% pela UF de origem); padrão: a interestadual. */
+  aliquotaFrete?: number;
   /** Alíquota de IPI sobre os produtos; opcional. */
   aliquotaIpi?: number;
-  /** MVA original do Anexo 05. Sem MVA, o cálculo é de antecipação parcial. */
+  /** Valor do IPI em centavos, como na nota; tem prioridade sobre a alíquota. */
+  valorIpi?: number;
+  /** MVA original do Anexo 05. Sem MVA, o cálculo é de antecipação. */
   mva?: number;
   /** MVA ajustada publicada no Anexo 05 para a alíquota interestadual; sem ela, usa a fórmula. */
   mvaAjustada?: number;
   /** Adicional do FUNCEP em pontos percentuais, somado à alíquota interna no débito. */
   fcp?: number;
-  /** Fornecedor optante do Simples: a ST usa a MVA original, sem ajuste (Conv. ICMS 142/2018, cl. 11, § 1º). */
+  /**
+   * Fornecedor optante do Simples: não destaca ICMS na nota (sem crédito na antecipação) e, na ST,
+   * usa a MVA original, sem ajuste (Conv. ICMS 142/2018, cl. 11, § 1º).
+   */
   fornecedorSimples?: boolean;
 }
 
@@ -29,8 +38,16 @@ export interface Resultado {
   /** MVA aplicada na ST em percentual: ajustada (2 casas) ou original, se o fornecedor é do Simples. */
   mvaAjustada?: number;
   baseCalculo: number;
-  /** ICMS destacado pelo fornecedor, abatido como crédito. */
+  /** Créditos abatidos: ICMS da nota e, na antecipação, do CT-e. */
   icmsProprio: number;
+  /** Antecipação: ICMS destacado na nota (zero se o fornecedor é do Simples). */
+  creditoNota?: number;
+  /** Antecipação: ICMS do CT-e de frete. */
+  creditoFrete?: number;
+  /** Antecipação: produtos + IPI + frete − créditos, antes de dividir por (1 − interna). */
+  valorLiquido?: number;
+  /** Antecipação: interna (com FUNCEP) − interestadual, em percentual. */
+  diferencaAliquotas?: number;
   icmsDevido: number;
   /** ICMS devido sobre o valor dos produtos, em percentual. */
   percentualEfetivo: number;
@@ -48,41 +65,39 @@ export function mvaAjustada(mva: number, inter: number, intra: number): number {
 
 export function calcular(e: Entrada): Resultado {
   const frete = e.frete ?? 0;
-  const valorIpi = Math.round(e.valorProdutos * pct(e.aliquotaIpi ?? 0));
-  const baseIcmsProprio = e.valorProdutos + frete;
-  const icmsProprio = Math.round(baseIcmsProprio * pct(e.aliquotaInterestadual));
-
+  const valorIpi = e.valorIpi ?? Math.round(e.valorProdutos * pct(e.aliquotaIpi ?? 0));
+  const inter = e.aliquotaInterestadual;
   const aliquotaDebito = e.aliquotaInterna + (e.fcp ?? 0);
-  if (e.mva === undefined) {
-    // Antecipação parcial do Simples: diferença entre alíquotas, sem agregar MVA. O IPI entra na
-    // base porque é custo da compra para quem não se credita dele.
-    const baseCalculo = baseIcmsProprio + valorIpi;
-    const debito = Math.round(baseCalculo * pct(aliquotaDebito));
-    return resultado("antecipacao", e, { valorIpi, frete, baseCalculo, icmsProprio, debito });
-  }
 
-  const mvaAj = e.fornecedorSimples
-    ? e.mva
-    : (e.mvaAjustada ?? mvaAjustada(e.mva, e.aliquotaInterestadual, e.aliquotaInterna));
+  if (e.mva === undefined) return antecipacao(e, frete, valorIpi, aliquotaDebito);
+
+  const icmsProprio = Math.round((e.valorProdutos + frete) * pct(inter));
+  const mvaAj = e.fornecedorSimples ? e.mva : (e.mvaAjustada ?? mvaAjustada(e.mva, inter, e.aliquotaInterna));
   const baseCalculo = Math.round((e.valorProdutos + frete + valorIpi) * (1 + pct(mvaAj)));
-  const debito = Math.round(baseCalculo * pct(aliquotaDebito));
-  return { ...resultado("st", e, { valorIpi, frete, baseCalculo, icmsProprio, debito }), mvaAjustada: mvaAj };
+  const icmsDevido = Math.max(0, Math.round(baseCalculo * pct(aliquotaDebito)) - icmsProprio);
+  return { regime: "st", valorIpi, frete, mvaAjustada: mvaAj, baseCalculo, icmsProprio, icmsDevido, percentualEfetivo: efetivo(e, icmsDevido) };
 }
 
-function resultado(
-  regime: Regime,
-  e: Entrada,
-  p: { valorIpi: number; frete: number; baseCalculo: number; icmsProprio: number; debito: number },
-): Resultado {
-  const icmsDevido = Math.max(0, p.debito - p.icmsProprio);
-  const percentualEfetivo = e.valorProdutos > 0 ? arred2((icmsDevido / e.valorProdutos) * 100) : 0;
+/**
+ * Antecipação do Simples (DAR receita 1124), como a SEFAZ-PB calcula: base "por dentro" sobre o
+ * valor líquido dos créditos e diferença de alíquotas sobre a base. Conferida com as notas do
+ * DAR de 08/2026 (ver `notas-reais.test.ts`).
+ */
+function antecipacao(e: Entrada, frete: number, valorIpi: number, aliquotaDebito: number): Resultado {
+  const inter = e.aliquotaInterestadual;
+  const naNota = e.freteNaNota ? frete : 0;
+  const creditoNota = e.fornecedorSimples ? 0 : Math.round((e.valorProdutos + naNota) * pct(inter));
+  const creditoFrete = e.freteNaNota ? 0 : Math.round(frete * pct(e.aliquotaFrete ?? inter));
+  const valorLiquido = e.valorProdutos + valorIpi + frete - creditoNota - creditoFrete;
+  const baseCalculo = Math.round((valorLiquido * 100) / (100 - aliquotaDebito));
+  const diferencaAliquotas = arred2(aliquotaDebito - inter);
+  const icmsDevido = Math.max(0, Math.round(baseCalculo * pct(diferencaAliquotas)));
   return {
-    regime,
-    valorIpi: p.valorIpi,
-    frete: p.frete,
-    baseCalculo: p.baseCalculo,
-    icmsProprio: p.icmsProprio,
-    icmsDevido,
-    percentualEfetivo,
+    regime: "antecipacao", valorIpi, frete, baseCalculo,
+    icmsProprio: creditoNota + creditoFrete, creditoNota, creditoFrete, valorLiquido, diferencaAliquotas,
+    icmsDevido, percentualEfetivo: efetivo(e, icmsDevido),
   };
 }
+
+const efetivo = (e: Entrada, icmsDevido: number) =>
+  e.valorProdutos > 0 ? arred2((icmsDevido / e.valorProdutos) * 100) : 0;

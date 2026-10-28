@@ -1,0 +1,200 @@
+{
+  "id": "a00088f9-ba77-4805-8b1e-e4f08ab14cdb",
+  "prevId": "fa0f3f7e-2cff-4ae4-8ba7-db5470ecacb3",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.simulacoes": {
+      "name": "simulacoes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "criada_em": {
+          "name": "criada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ncm": {
+          "name": "ncm",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cest": {
+          "name": "cest",
+          "type": "varchar(9)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variante": {
+          "name": "variante",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "descricao_anexo": {
+          "name": "descricao_anexo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uf_origem": {
+          "name": "uf_origem",
+          "type": "varchar(2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "importado": {
+          "name": "importado",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fornecedor_simples": {
+          "name": "fornecedor_simples",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revenda": {
+          "name": "revenda",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "valor_produtos": {
+          "name": "valor_produtos",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete": {
+          "name": "frete",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "frete_na_nota": {
+          "name": "frete_na_nota",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aliquota_ipi": {
+          "name": "aliquota_ipi",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valor_ipi": {
+          "name": "valor_ipi",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aliquota_interestadual": {
+          "name": "aliquota_interestadual",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aliquota_interna": {
+          "name": "aliquota_interna",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fcp": {
+          "name": "fcp",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mva": {
+          "name": "mva",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mva_aplicada": {
+          "name": "mva_aplicada",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "regime": {
+          "name": "regime",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icms_devido": {
+          "name": "icms_devido",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "percentual_efetivo": {
+          "name": "percentual_efetivo",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fornecedor": {
+          "name": "fornecedor",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observacao": {
+          "name": "observacao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "simulacoes_criada_em_idx": {
+          "name": "simulacoes_criada_em_idx",
+          "columns": [
+            {
+              "expression": "criada_em",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

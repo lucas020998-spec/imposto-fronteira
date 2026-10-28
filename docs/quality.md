@@ -27,6 +27,7 @@ O build não roda lint; use `pnpm lint` ou `pnpm check`.
 
 - `src/lib/tax/calculate.test.ts`: alíquotas por origem, MVA ajustada, ST com frete e IPI, antecipação parcial, campos opcionais e casos-limite. Os valores esperados foram conferidos à mão.
 - `src/lib/anexo5/anexo5.test.ts`: geometria da tabela (colunas e linhas pelas bordas), linhas cortadas por quebra de página, revogados, redações substituídas de item e de segmento, variantes de MVA, MVA por procedência, alíquota com FUNCEP, CSV e busca.
+- `src/lib/tax/notas-reais.test.ts`: as 11 notas do DAR de 08/2026 (antecipação), com base e ICMS de cada uma e o total de R$ 4.021,49. Qualquer mudança no cálculo que quebre esses valores precisa de nova evidência da SEFAZ.
 - `src/lib/simulacao.test.ts`: MVA ajustada publicada por origem, alíquota e FUNCEP do item, MVA manual e item sem MVA percentual.
 - `src/lib/format.test.ts`: leitura de números em pt-BR e formatação.
 - `src/features/historico/actions.test.ts`: recálculo no servidor, resultado do cliente ignorado, textos opcionais, entrada inválida e falha de banco sem vazar detalhes.

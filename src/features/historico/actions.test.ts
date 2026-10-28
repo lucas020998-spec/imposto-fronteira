@@ -33,7 +33,7 @@ describe("salvarSimulacao", () => {
     // Tubos de plástico para construção (CEST 10.006.00): MVA 33%, ajustada 54,61% para 7%.
     const r = await salvarSimulacao({
       ncm: "39173300", cest: "10.006.00", variante: null, ufOrigem: "SP", importado: false,
-      fornecedorSimples: false, valorProdutos: 100_000, mva: 99,
+      fornecedorSimples: false, valorProdutos: 100_000, mva: 99, revenda: true,
     } as never);
     expect(r.ok).toBe(true);
     expect(inserirSimulacao).toHaveBeenCalledWith(expect.objectContaining({

@@ -35,7 +35,8 @@ src/
 ├── data/anexo5.json             # base do Anexo 05 gerada pelo importador
 └── lib/
     ├── tax/rates.ts             # UFs, alíquota interestadual por origem, interna da PB
-    ├── tax/calculate.ts         # ST com MVA ajustada e antecipação parcial
+    ├── tax/calculate.ts         # ST (revenda) e antecipação "por dentro" da SEFAZ-PB
+    ├── tax/notas-reais.test.ts  # regressão com as 11 notas do DAR de 08/2026
     ├── anexo5/schema.ts         # formato validado da base (Zod)
     ├── anexo5/tabela.ts         # geometria do PDF (textos + bordas) → linhas e colunas
     ├── anexo5/parse.ts          # linhas → itens vigentes (MVAs, alíquota, notas de revogação) ou CSV
@@ -70,7 +71,7 @@ fontes/                          # PDF oficial do Anexo 05 usado na importação
 
 ### Histórico (PostgreSQL)
 
-Tabela `simulacoes` (`src/db/schema/index.ts`, SQL em `drizzle/0000_simulacoes.sql` e `0001_variante_fcp_mva_aplicada.sql`): entrada (NCM, CEST, variante, descrição, UF, importado, fornecedor do Simples, valores em centavos `bigint`, alíquotas, FUNCEP, MVA original e MVA aplicada `numeric`), resultado (regime, ICMS devido, percentual), `fornecedor` e `observacao` opcionais e `criada_em` com índice decrescente. Não há chaves estrangeiras nem dados pessoais além do nome do fornecedor.
+Tabela `simulacoes` (`src/db/schema/index.ts`, SQL em `drizzle/0000_simulacoes.sql` e `0001_variante_fcp_mva_aplicada.sql`, `0002_revenda_frete_ipi.sql`): entrada (NCM, CEST, variante, descrição, UF, importado, fornecedor do Simples, valores em centavos `bigint`, alíquotas, FUNCEP, MVA original e MVA aplicada `numeric`), resultado (regime, ICMS devido, percentual), `fornecedor` e `observacao` opcionais e `criada_em` com índice decrescente. Não há chaves estrangeiras nem dados pessoais além do nome do fornecedor.
 
 Ciclo: alterar o schema → `pnpm db:generate` → revisar o SQL → `pnpm db:migrate` no banco certo. Nunca migrar durante build ou requisição. Pool de até 5 conexões, criado no primeiro uso; o build e os testes não precisam de banco.
 

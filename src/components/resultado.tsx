@@ -6,35 +6,52 @@ interface Props {
   resultado: ResultadoCalculo;
 }
 
+type Linha = [string, string];
+
 function rotuloMva(e: Entrada) {
   if (e.fornecedorSimples) return "MVA aplicada (fornecedor do Simples)";
   return e.mvaAjustada !== undefined ? "MVA ajustada (Anexo 05)" : "MVA ajustada (calculada)";
 }
 
+const aliquotaPb = (e: Entrada) => `${formatarPct(e.aliquotaInterna)}${e.fcp ? ` + ${formatarPct(e.fcp)} FUNCEP` : ""}`;
+
+function linhasSt(e: Entrada, r: ResultadoCalculo): Linha[] {
+  return [
+    ["MVA original", formatarPct(e.mva ?? 0)],
+    [rotuloMva(e), formatarPct(r.mvaAjustada ?? 0)],
+    ["Base de cálculo da ST", formatarMoeda(r.baseCalculo)],
+    [`ICMS na PB (${aliquotaPb(e)} da base)`, formatarMoeda(r.icmsDevido + r.icmsProprio)],
+    [`(−) ICMS do fornecedor (${formatarPct(e.aliquotaInterestadual)})`, formatarMoeda(r.icmsProprio)],
+  ];
+}
+
+function linhasAntecipacao(e: Entrada, r: ResultadoCalculo): Linha[] {
+  const interna = e.aliquotaInterna + (e.fcp ?? 0);
+  return [
+    [
+      e.fornecedorSimples ? "(−) ICMS da nota (fornecedor do Simples)" : `(−) ICMS da nota (${formatarPct(e.aliquotaInterestadual)})`,
+      formatarMoeda(r.creditoNota ?? 0),
+    ],
+    ...(r.creditoFrete ? [[`(−) ICMS do CT-e (${formatarPct(e.aliquotaFrete ?? e.aliquotaInterestadual)})`, formatarMoeda(r.creditoFrete)] as Linha] : []),
+    ["Valor líquido", formatarMoeda(r.valorLiquido ?? 0)],
+    [`Base de cálculo (÷ ${(1 - interna / 100).toLocaleString("pt-BR")})`, formatarMoeda(r.baseCalculo)],
+    [`Diferença de alíquotas (${aliquotaPb(e)} − ${formatarPct(e.aliquotaInterestadual)})`, formatarPct(r.diferencaAliquotas ?? 0)],
+  ];
+}
+
 export function Resultado({ entrada, resultado: r }: Props) {
   const st = r.regime === "st";
-  const linhas: [string, string][] = [
+  const linhas: Linha[] = [
     ["Valor dos produtos", formatarMoeda(entrada.valorProdutos)],
-    ...(r.frete ? [["Frete", formatarMoeda(r.frete)] as [string, string]] : []),
-    ...(r.valorIpi ? [[`IPI (${formatarPct(entrada.aliquotaIpi ?? 0)})`, formatarMoeda(r.valorIpi)] as [string, string]] : []),
-    ...(st
-      ? [
-          ["MVA original", formatarPct(entrada.mva ?? 0)],
-          [rotuloMva(entrada), formatarPct(r.mvaAjustada ?? 0)],
-        ] as [string, string][]
-      : []),
-    [st ? "Base de cálculo da ST" : "Base de cálculo", formatarMoeda(r.baseCalculo)],
-    [
-      `ICMS na PB (${formatarPct(entrada.aliquotaInterna)}${entrada.fcp ? ` + ${formatarPct(entrada.fcp)} FUNCEP` : ""} da base)`,
-      formatarMoeda(r.icmsDevido + r.icmsProprio),
-    ],
-    [`(−) ICMS do fornecedor (${formatarPct(entrada.aliquotaInterestadual)})`, formatarMoeda(r.icmsProprio)],
+    ...(r.frete ? [[entrada.freteNaNota ? "Frete (na nota)" : "Frete (CT-e)", formatarMoeda(r.frete)] as Linha] : []),
+    ...(r.valorIpi ? [["IPI", formatarMoeda(r.valorIpi)] as Linha] : []),
+    ...(st ? linhasSt(entrada, r) : linhasAntecipacao(entrada, r)),
   ];
 
   return (
     <section aria-labelledby="resultado-titulo" aria-live="polite" className="rounded-xl border border-line bg-card p-5">
       <h2 id="resultado-titulo" className="text-sm font-medium text-muted">
-        {st ? "Substituição tributária (com MVA)" : "Antecipação parcial"}
+        {st ? "Substituição tributária (revenda, com MVA)" : "Antecipação (ICMS-Simples Nacional-Fronteira)"}
       </h2>
       <p className="mt-2 text-4xl font-semibold tabular-nums tracking-tight">{formatarPct(r.percentualEfetivo)}</p>
       <p className="mt-1 text-sm text-muted">
