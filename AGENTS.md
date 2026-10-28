@@ -83,6 +83,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `next-dev-loop`: feedback de runtime após mudanças, se `agent-browser` estiver disponível (hoje não está).
 - `next-bundle-optimizer`: auditoria de bundle baseada em evidência.
 - `supabase-postgres-best-practices`: antes de mexer em schema, SQL, migrações ou desempenho do PostgreSQL (vale para qualquer provedor).
+- `neon` e `neon-postgres`: ao configurar ou inspecionar o banco de produção no Neon (conexão com e sem pooling, branches, migrações). Exigem `NEON_API_KEY` no ambiente e acesso de rede a `*.neon.tech`; nunca rode `neon login` sem uma pessoa presente. Não adote Neon Auth, Functions ou outros serviços da Neon sem pedido.
 
 Instalar uma skill não executa suas ações nem autoriza deploy, animações ou mudanças de arquitetura.
 

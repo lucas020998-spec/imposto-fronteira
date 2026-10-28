@@ -39,6 +39,7 @@
 | `differential-review` | Projeto sem área sensível (sem auth, dados ou segredos) | — | Não selecionada; usar o prompt de segurança do toolkit |
 | shadcn | Nenhum sistema de UI adotado | — | Não se aplica |
 | Sentry MCP | Nenhum serviço escolhido | — | Não se aplica |
+| `neon`, `neon-postgres` (neondatabase/agent-skills) | Pedido do usuário para acessar o projeto no Neon; instaladas com `npx neon@8.13.1 skills -s neon -s neon-postgres -y` | Projeto (`.claude/skills/`, `skills-lock.json`) | Instaladas. Acesso ao projeto pendente: a rede da sessão bloqueia `console.neon.tech` e não há `NEON_API_KEY` |
 | Harness2 (método nativo) | Padrão do bootstrap | Projeto (docs) | Configurado; teste inicial abaixo |
 | Ponytail, Caveman, Superpowers, RTK | Plugins não encontrados nesta sessão | — | Pendente: preparar a máquina (prompt 10 do toolkit). Acordos registrados em `AGENTS.md` |
 | Context7 | MCP não configurado; sessão sem acesso para configurar | — | Pendente |
