@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Imposto Fronteira PB
 
-## Getting Started
+Simulador do ICMS de fronteira para compras interestaduais com destino à Paraíba. O gerente de compras informa o NCM, o estado do fornecedor e o valor; o app consulta o Anexo 05 do RICMS-PB e mostra o percentual de imposto, a memória de cálculo e uma explicação passo a passo.
 
-First, run the development server:
+## Rodar
+
+Requer Node.js 22+ e pnpm 10.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev            # http://localhost:3000
+pnpm check          # lint, tipos, testes e build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Não há variáveis de ambiente nem banco de dados.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Importar o Anexo 05
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Baixe o PDF vigente do Anexo 05 no site da SEFAZ-PB e rode:
 
-## Learn More
+```bash
+pnpm anexo5:import caminho/ANEXO_05.pdf "Anexo 05 RICMS-PB, versão de DD/MM/AAAA"
+```
 
-To learn more about Next.js, take a look at the following resources:
+O comando grava `src/data/anexo5.json`. Confira alguns itens com o PDF antes de usar. Também aceita CSV com as colunas `cest;ncm;descricao;mva`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentação
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Produto e escopo](PRODUCT.md)
+- [Preparação local](docs/onboarding.md)
+- [Estrutura e decisões técnicas](docs/architecture.md)
+- [Design e acessibilidade](docs/design.md)
+- [Verificações de qualidade](docs/quality.md)
+- [Instruções para agentes](AGENTS.md)
+- [Setup e evidências](docs/setup.md)
 
-## Deploy on Vercel
+## Próxima entrega
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Importar o PDF oficial do Anexo 05 e conferir 10 itens de segmentos diferentes contra o documento.
